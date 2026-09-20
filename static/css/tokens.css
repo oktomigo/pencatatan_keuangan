@@ -1,0 +1,139 @@
+/* Design tokens: semua CSS custom properties dari design.md section 3 */
+
+:root {
+
+  /* ============================================================
+     BRAND COLORS — Primary teal
+  ============================================================ */
+  --color-primary-50:  #E8F5F3; /* Background tint ringan */
+  --color-primary-100: #C5E8E2; /* Hover state ringan */
+  --color-primary-200: #9DD5CB; /* Disabled active state */
+  --color-primary-300: #6EBFB3; /* Secondary elements */
+  --color-primary-400: #3DA897; /* Icon tint */
+  --color-primary-500: #0D9488; /* Primary brand color — CTA utama, link aktif */
+  --color-primary-600: #0A7D74; /* Hover state primary */
+  --color-primary-700: #076860; /* Active/pressed state */
+  --color-primary-800: #055249; /* Dark emphasis */
+  --color-primary-900: #023D37; /* Darkest tint */
+
+  /* ============================================================
+     SEMANTIC — Success (hijau)
+  ============================================================ */
+  --color-success-50:  #F0FDF4; /* Background success ringan */
+  --color-success-500: #22C55E; /* Anggaran aman (<80%), pemasukan, konfirmasi */
+  --color-success-600: #16A34A; /* Hover success */
+  --color-success-700: #15803D; /* Text success di light bg */
+
+  /* ============================================================
+     SEMANTIC — Warning (kuning)
+  ============================================================ */
+  --color-warning-50:  #FFFBEB; /* Background warning ringan */
+  --color-warning-400: #FBBF24; /* Anggaran mendekati batas (80–99%) */
+  --color-warning-500: #F59E0B; /* Warning default */
+  --color-warning-700: #B45309; /* Text warning di light bg */
+
+  /* ============================================================
+     SEMANTIC — Danger (merah)
+  ============================================================ */
+  --color-danger-50:  #FEF2F2; /* Background danger ringan */
+  --color-danger-300: #FCA5A5; /* Tint ringan danger */
+  --color-danger-500: #EF4444; /* Anggaran terlampaui, pengeluaran, error, hapus */
+  --color-danger-600: #DC2626; /* Hover danger */
+  --color-danger-700: #B91C1C; /* Text danger di light bg */
+
+  /* ============================================================
+     SEMANTIC — Info (biru)
+  ============================================================ */
+  --color-info-50:  #EFF6FF; /* Background info ringan */
+  --color-info-500: #3B82F6; /* Informasi netral, tagihan berulang */
+  --color-info-600: #2563EB; /* Hover info */
+  --color-info-700: #1D4ED8; /* Text info di light bg */
+
+  /* ============================================================
+     SURFACE & BACKGROUND
+  ============================================================ */
+  --color-surface-base:    #FAFAF9;          /* Background aplikasi utama */
+  --color-surface-card:    #FFFFFF;          /* Background card/panel */
+  --color-surface-raised:  #F5F5F4;          /* Background section elevated */
+  --color-surface-overlay: rgba(0,0,0,0.5); /* Modal overlay */
+  --color-surface-nav:     #FFFFFF;          /* Bottom nav / sidebar */
+
+  /* ============================================================
+     TEXT HIERARCHY
+  ============================================================ */
+  --color-text-primary:   #1C1917; /* Heading utama, label penting */
+  --color-text-secondary: #57534E; /* Subheading, label sekunder */
+  --color-text-tertiary:  #A8A29E; /* Placeholder, caption, disabled */
+  --color-text-inverse:   #FFFFFF; /* Teks di atas background gelap */
+  --color-text-link:      #0D9488; /* Link aktif */
+  --color-text-income:    #16A34A; /* Teks nominal pemasukan */
+  --color-text-expense:   #DC2626; /* Teks nominal pengeluaran */
+
+  /* ============================================================
+     BORDER
+  ============================================================ */
+  --color-border-light:  #E7E5E4; /* Border default card, input */
+  --color-border-medium: #D6D3D1; /* Border divider, separator */
+  --color-border-focus:  #0D9488; /* Focus ring input */
+  --color-border-error:  #EF4444; /* Input error state */
+
+  /* ============================================================
+     TYPOGRAPHY
+  ============================================================ */
+  --text-display:   2rem;       /* 32px — Saldo utama di dashboard */
+  --text-heading-1: 1.5rem;     /* 24px — Judul halaman */
+  --text-heading-2: 1.25rem;    /* 20px — Judul section, card header */
+  --text-heading-3: 1.125rem;   /* 18px — Subheading */
+  --text-body-lg:   1rem;       /* 16px — Body text utama */
+  --text-body-md:   0.875rem;   /* 14px — Body text sekunder, label */
+  --text-caption:   0.75rem;    /* 12px — Caption, timestamp, hint */
+  --text-label-sm:  0.6875rem;  /* 11px — Badge, chip label */
+  --text-number-lg: 1.75rem;    /* 28px — Angka nominal besar di card */
+  --text-number-md: 1.25rem;    /* 20px — Angka nominal medium */
+
+  /* ============================================================
+     SPACING — Base unit 4px
+  ============================================================ */
+  --space-1:  4px;   /* Micro spacing, icon gap */
+  --space-2:  8px;   /* Inner padding kecil, gap antar icon-text */
+  --space-3:  12px;  /* Padding input, gap antar item kecil */
+  --space-4:  16px;  /* Padding card, gap antar elemen */
+  --space-5:  20px;  /* Padding section, gap medium */
+  --space-6:  24px;  /* Padding page, gap besar */
+  --space-7:  28px;  /* Margin section */
+  --space-8:  32px;  /* Padding besar */
+  --space-9:  36px;  /* Gap antar card di grid */
+  --space-10: 40px;  /* Margin vertikal besar */
+  --space-11: 44px;  /* Minimum touch target height */
+  --space-12: 48px;  /* Bottom nav height, FAB size */
+  --space-16: 64px;  /* Hero section padding */
+  --space-20: 80px;  /* Bottom padding di atas nav bar */
+
+  /* ============================================================
+     BORDER RADIUS
+  ============================================================ */
+  --rounded-sm:   4px;    /* Badge, chip, tooltip */
+  --rounded-md:   8px;    /* Input field, button */
+  --rounded-lg:   12px;   /* Card, panel */
+  --rounded-xl:   16px;   /* Bottom sheet, modal */
+  --rounded-2xl:  20px;   /* Large card, illustration container */
+  --rounded-full: 9999px; /* Avatar, FAB, pill badge */
+
+  /* ============================================================
+     SHADOW
+  ============================================================ */
+  --shadow-sm:    0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md:    0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg:    0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+  --shadow-xl:    0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  --shadow-inner: inset 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-nav:   0 -1px 0 rgba(0,0,0,0.06), 0 -4px 12px rgba(0,0,0,0.08);
+
+  /* ============================================================
+     TRANSITION
+  ============================================================ */
+  --transition-fast:   100ms ease;                            /* Button tap feedback */
+  --transition-normal: 200ms ease;                            /* Hover state, color change */
+  --transition-slow:   300ms ease-in-out;                     /* Modal open/close */
+  --transition-spring: 300ms cubic-bezier(0.34,1.56,0.64,1); /* FAB, bottom sheet spring */
+}

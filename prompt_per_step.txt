@@ -1,0 +1,991 @@
+================================================================
+KUMPULAN PROMPT PER STEP
+Aplikasi Pencatatan Keuangan — UI-First Approach
+================================================================
+
+CARA PAKAI:
+1. Buka chat Kiro baru atau chat yang sudah ada
+2. Ketik #File lalu pilih file-file ini sebelum kirim prompt:
+   → .kiro/specs/pencatatan-keuangan/design.md
+   → .kiro/specs/pencatatan-keuangan/requirements.md
+3. Copy prompt step yang ingin dikerjakan
+4. Tempel di chat dan kirim
+5. Kerjakan satu step, selesaikan dulu, baru lanjut step berikutnya
+
+ARSITEKTUR FRONTEND:
+• HTML markup ada di templates/ (Jinja2, dirender Flask)
+• static/js/ HANYA berisi fungsi JS murni:
+    - Manipulasi DOM pada elemen yang sudah ada di HTML
+    - Event listener (klik, input, submit)
+    - Animasi dan transisi
+    - Validasi form
+    - Update data di DOM (innerHTML, textContent, classList)
+  TIDAK boleh generate struktur HTML dari JS
+• static/css/ berisi tokens.css dan main.css
+• Data dummy ada di static/js/mock.js sebagai JS object
+
+ATURAN YANG BERLAKU DI SEMUA PROMPT:
+• Gunakan CSS custom properties dari tokens.css — JANGAN hardcode hex/pixel
+  Contoh benar : color: var(--color-primary-500)
+  Contoh salah : color: #0D9488
+• Semua angka Rupiah pakai fungsi formatRupiah() dari utils.js
+• Semua elemen interaktif minimum height 44px (var(--space-11))
+• Fase 1–2: data dari mock.js, bukan fetch ke backend
+• Fase 3–4: ganti mock dengan fetch ke Flask API
+
+================================================================
+STRUKTUR PROJECT
+================================================================
+
+pecatatan_keuangan/
+├── main.py                        ← Flask app, semua route
+├── templates/
+│   ├── base.html                  ← layout shell (nav, FAB, toast container)
+│   ├── onboarding.html
+│   ├── dashboard.html
+│   ├── transactions.html
+│   ├── categories.html
+│   ├── budgets.html
+│   ├── reports.html
+│   ├── recurring_bills.html
+│   ├── savings.html
+│   ├── export.html
+│   └── settings.html
+└── static/
+    ├── manifest.json
+    ├── service-worker.js
+    ├── css/
+    │   ├── tokens.css
+    │   └── main.css
+    └── js/
+        ├── utils.js               ← formatRupiah, formatDate, dll
+        ├── mock.js                ← data dummy (JS object)
+        ├── state.js               ← state global sederhana
+        ├── api.js                 ← fetch wrapper ke Flask API
+        ├── toast.js               ← fungsi showToast()
+        ├── modal.js               ← fungsi openModal(), openBottomSheet()
+        ├── router.js              ← navigate() via History API
+        ├── onboarding.js          ← behavior slide, swipe, tombol
+        ├── dashboard.js           ← isi data ke DOM, event handler
+        ├── transactions.js        ← filter, search, event handler
+        ├── categories.js          ← CRUD kategori, event handler
+        ├── budgets.js             ← progress bar update, event handler
+        ├── reports.js             ← Chart.js init & update
+        ├── recurring_bills.js     ← mark as paid, event handler
+        ├── savings.js             ← progress update, event handler
+        ├── export.js              ← form handler, simulasi ekspor
+        └── settings.js            ← notif permission, PWA install
+
+================================================================
+FASE 1 — FONDASI
+================================================================
+
+──────────────────────────────────────────────────────────────
+STEP 1.1 — Struktur Folder & File Kosong
+──────────────────────────────────────────────────────────────
+Buat struktur folder dan file kosong sesuai arsitektur di atas.
+
+Setiap file templates/*.html: skeleton HTML5 minimal yang
+extends base.html dengan block content kosong.
+
+Setiap file static/js/*.js: komentar satu baris tugasnya
++ export fungsi init() kosong (bukan render()).
+
+main.py: Flask app dengan route untuk setiap halaman.
+
+──────────────────────────────────────────────────────────────
+STEP 1.2 — Design Tokens CSS
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Buat file static/css/tokens.css.
+
+Ambil SEMUA design tokens dari design.md section 3 dan tulis
+sebagai CSS custom properties di :root {}.
+
+Harus mencakup:
+- Semua color tokens (--color-primary-50 sampai -900, success,
+  warning, danger, info, surface, text hierarchy, border)
+- Semua typography tokens (--text-display, --text-heading-*,
+  --text-body-*, --text-caption, --text-label-sm,
+  --text-number-lg, --text-number-md)
+- Semua spacing tokens (--space-1 sampai --space-20)
+- Semua border radius tokens (--rounded-sm sampai --rounded-full)
+- Semua shadow tokens (--shadow-sm sampai --shadow-nav)
+- Semua transition tokens (--transition-fast sampai --transition-spring)
+
+Tulis setiap token dengan komentar singkat penggunaannya
+persis seperti di design.md. Jangan ada token yang terlewat.
+
+──────────────────────────────────────────────────────────────
+STEP 1.3 — Global Styles & Font
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Buat file static/css/main.css dengan isi berikut:
+
+1. @import tokens.css
+
+2. @import Google Fonts: Plus Jakarta Sans (weight 400, 500,
+   600, 700) dan Inter (weight 400, 600)
+
+3. Base reset minimal:
+   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+   html { font-size: 16px; }
+   body { font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+          background: var(--color-surface-base);
+          color: var(--color-text-primary); }
+
+4. Utility classes yang pakai design tokens:
+   .text-income  { color: var(--color-text-income); }
+   .text-expense { color: var(--color-text-expense); }
+   .tabular-nums { font-variant-numeric: tabular-nums; }
+   .visually-hidden { (class untuk screen reader saja) }
+
+5. Animasi skeleton shimmer:
+   @keyframes shimmer { 0% { background-position: -200% 0; }
+                        100% { background-position: 200% 0; } }
+   .skeleton { background: linear-gradient(90deg,
+     var(--color-surface-raised) 25%,
+     rgba(255,255,255,0.6) 50%,
+     var(--color-surface-raised) 75%);
+     background-size: 200% 100%;
+     animation: shimmer 1.5s infinite; }
+
+6. Class untuk status warna anggaran:
+   .budget-safe    { color: var(--color-success-700); }
+   .budget-warning { color: var(--color-warning-700); }
+   .budget-danger  { color: var(--color-danger-700); }
+
+7. Styling untuk layout shell (bottom nav, sidebar, FAB, main content):
+   - #bottom-nav: fixed bottom, width 100%, height 64px,
+     background var(--color-surface-nav), shadow var(--shadow-nav)
+     visible di <1024px, hidden di >=1024px
+   - #sidebar-nav: fixed left, width 240px, height 100vh,
+     hidden di <1024px, visible di >=1024px
+   - #fab-add: fixed, 56px, rounded-full,
+     background var(--color-primary-500), shadow var(--shadow-xl)
+     mobile: bottom 80px right 16px | desktop: bottom 32px right 32px
+   - #page-content: padding-bottom 80px di mobile,
+     margin-left 240px di desktop
+
+──────────────────────────────────────────────────────────────
+STEP 1.4 — base.html (Layout Shell)
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Buat templates/base.html sebagai Jinja2 layout shell.
+Ikuti design.md section 6 (layout) dan section 9 (responsive).
+
+<head> harus mencakup:
+- meta charset, viewport, theme-color (#0D9488)
+- Link ke static/css/tokens.css dan static/css/main.css
+  pakai url_for('static', filename='...')
+- Tailwind CSS CDN
+- Lucide Icons CDN
+- Link ke manifest.json
+- {% block head %}{% endblock %} untuk tambahan per halaman
+
+<body> harus mencakup (sesuai urutan DOM):
+
+1. Offline banner (id="offline-banner", hidden by default):
+   - Teks "Mode Offline — Data tersimpan lokal"
+   - style: background var(--color-info-50), color var(--color-info-700)
+   - Fixed di atas, z-index tinggi
+
+2. Toast container (id="toast-container"):
+   - Fixed, posisi diatur di main.css
+   - Kosong, diisi oleh toast.js
+
+3. <main id="page-content" role="main">:
+   - {% block content %}{% endblock %}
+
+4. Bottom navigation (id="bottom-nav"):
+   - <nav aria-label="Navigasi utama">
+   - 5 item <a> dengan data-nav-path dan href ke route Flask:
+     href="/dashboard"       data-nav-path="/dashboard"    → ikon home    "Beranda"
+     href="/transactions"    data-nav-path="/transactions" → ikon list    "Transaksi"
+     href="/reports"         data-nav-path="/reports"      → ikon bar-chart-2 "Laporan"
+     href="/savings"         data-nav-path="/savings"      → ikon piggy-bank  "Tabungan"
+     href="/settings"        data-nav-path="/settings"     → ikon menu    "Lainnya"
+   - Setiap item: <i data-lucide="[ikon]"></i> + <span>label</span>
+   - safe-area-inset-bottom untuk iOS via padding-bottom
+
+5. Sidebar navigation (id="sidebar-nav"):
+   - <nav aria-label="Navigasi utama">
+   - Logo/app name "CatatUang" di atas
+   - Item sama dengan bottom nav, pakai <a> dengan href + data-nav-path
+
+6. FAB button (id="fab-add"):
+   - <button aria-label="Catat transaksi baru" aria-expanded="false">
+   - <i data-lucide="plus"></i>
+
+7. Di akhir <body>:
+   - <script src="https://unpkg.com/lucide@latest"></script>
+   - <script>lucide.createIcons()</script>
+   - <script type="module" src="{{ url_for('static', filename='js/router.js') }}"></script>
+   - {% block scripts %}{% endblock %} untuk JS per halaman
+
+──────────────────────────────────────────────────────────────
+STEP 1.5 — main.py (Flask Routes)
+──────────────────────────────────────────────────────────────
+Buat main.py dengan semua route halaman dan route API placeholder.
+
+Route halaman (GET, render template):
+  /              → redirect ke /dashboard
+  /onboarding    → templates/onboarding.html
+  /dashboard     → templates/dashboard.html
+  /transactions  → templates/transactions.html
+  /categories    → templates/categories.html
+  /budgets       → templates/budgets.html
+  /reports       → templates/reports.html
+  /recurring-bills → templates/recurring_bills.html
+  /savings       → templates/savings.html
+  /export        → templates/export.html
+  /settings      → templates/settings.html
+
+Route API placeholder (kembalikan JSON kosong untuk sekarang):
+  GET  /api/health
+  GET  /api/transactions
+  POST /api/transactions
+  PUT  /api/transactions/<id>
+  DELETE /api/transactions/<id>
+  GET  /api/categories
+  POST /api/categories
+  GET  /api/budgets
+  GET  /api/dashboard
+
+──────────────────────────────────────────────────────────────
+STEP 1.6 — Utility Functions (utils.js)
+──────────────────────────────────────────────────────────────
+Buat static/js/utils.js.
+Semua fungsi di-export agar bisa diimport modul lain.
+
+1. formatRupiah(number)
+   Input: 1234567 → Output: "Rp 1.234.567"
+   - Gunakan toLocaleString('id-ID')
+   - Jika negatif: "−Rp 1.234.567" (bukan -Rp)
+   - Jika 0: "Rp 0"
+
+2. formatDate(dateStr, format)
+   format 'long'  → "15 Oktober 2026"
+   format 'short' → "15 Okt"
+   format 'input' → "2026-10-15"
+   format 'group' → "Hari Ini" / "Kemarin" / "15 Oktober 2026"
+
+3. getMonthYear(date) → "Oktober 2026"
+
+4. daysFromNow(dateStr) → integer
+   Positif = ke depan, 0 = hari ini, negatif = sudah lewat
+
+5. calcPercentage(value, total) → number (bisa > 100)
+   Kembalikan 0 jika total = 0
+
+6. getBudgetStatus(percentage)
+   < 80   → 'safe'
+   80–99  → 'warning'
+   >= 100 → 'danger'
+
+7. generateDeviceId() → string UUID v4 via crypto.randomUUID()
+
+8. today() → string "YYYY-MM-DD" (untuk default value input date)
+
+──────────────────────────────────────────────────────────────
+STEP 1.7 — Mock Data (mock.js)
+──────────────────────────────────────────────────────────────
+Buat static/js/mock.js dengan data dummy realistis.
+Semua ID pakai UUID string. Data harus konsisten antar entitas.
+Export sebagai named export: export const MOCK = { ... }
+
+MOCK.categories: array 11 kategori
+  Pengeluaran (7): Makan, Transport, Kos, Tagihan, Hiburan, Belanja, Lainnya
+  Pemasukan (4): Gaji, Freelance, Bonus, Lainnya
+  { id, name, type, is_default: true, icon, color }
+  Warna berbeda per kategori dari palet design tokens.
+
+MOCK.transactions: array 15 transaksi bulan Oktober 2026
+  { id, type, amount, date, category_id, note, created_at }
+  category_id harus cocok dengan id di MOCK.categories.
+
+MOCK.budgets: array 4 anggaran (1 safe, 1 warning, 1 danger, 1 no-budget)
+  { id, category_id, amount, period, spent }
+
+MOCK.recurringBills: array 3 tagihan berulang
+  1 jatuh tempo hari ini, 1 belum jatuh tempo, 1 sudah lunas
+  { id, name, amount, due_day, frequency, next_due, is_paid_this_period }
+
+MOCK.savingsGoals: array 3 target tabungan
+  1 active (60%), 1 completed (100%), 1 overdue
+  { id, name, target_amount, saved_amount, deadline, status }
+
+MOCK.dashboard: ringkasan siap pakai
+  { balance, total_income, total_expense,
+    recent_transactions (5 item), upcoming_bills, budget_summary }
+
+──────────────────────────────────────────────────────────────
+STEP 1.8 — Toast (toast.js)
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Buat static/js/toast.js.
+Ikuti design.md section 7 (Toast / Notification Banner).
+
+Export: showToast(message, variant = 'info', duration = 3000)
+
+Fungsi ini HANYA membuat dan menginjek elemen <div> toast ke
+#toast-container yang sudah ada di base.html.
+
+variant: 'success' | 'error' | 'warning' | 'info'
+Warna (CSS variables):
+  success: bg var(--color-success-50), border var(--color-success-500),
+           text var(--color-success-700)
+  error  : bg var(--color-danger-50),  border var(--color-danger-500),
+           text var(--color-danger-700)
+  warning: bg var(--color-warning-50), border var(--color-warning-500),
+           text var(--color-warning-700)
+  info   : bg var(--color-info-50),    border var(--color-info-500),
+           text var(--color-info-700)
+
+Perilaku:
+- Inject <div role="status" aria-live="polite"> ke #toast-container
+- Animasi masuk: CSS class 'toast-enter' (slide + fade)
+- Auto-dismiss setelah duration → CSS class 'toast-exit' → remove dari DOM
+- Maksimal 3 toast tampil bersamaan (hapus yang terlama jika >3)
+- Tidak memblokir interaksi pengguna (pointer-events: none pada container)
+
+──────────────────────────────────────────────────────────────
+STEP 1.9 — Modal & Bottom Sheet (modal.js)
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Buat static/js/modal.js.
+Ikuti design.md section 7 (Modal / Bottom Sheet dan Confirmation Dialog).
+
+Semua fungsi menginjek elemen ke <body> yang sudah ada,
+bukan merender halaman baru.
+
+Export tiga fungsi:
+
+1. openModal({ title, contentHTML, size = 'md', onClose })
+   - Buat overlay + panel, inject ke body
+   - Overlay: background var(--color-surface-overlay)
+   - Panel: background var(--color-surface-card), rounded-xl, shadow-lg
+   - Header: title + tombol ✕
+   - Body: contentHTML (string HTML yang sudah dibuat di template/caller)
+   - Animasi: opacity 0→1 + scale 0.95→1
+   - Tutup: klik overlay, tombol ✕, Escape
+   - Focus trap aktif (Tab tetap di dalam modal)
+   - Fokus kembali ke trigger saat ditutup
+   - role="dialog" aria-modal="true" aria-labelledby
+
+2. openBottomSheet({ title, contentHTML, draggable = true, onClose })
+   - Inject overlay + sheet ke body
+   - Sheet dari bawah, max-height 85vh, rounded-xl di atas
+   - Drag handle: div 32x4px abu-abu di atas
+   - Animasi spring: translateY(100%)→translateY(0)
+   - Tutup: swipe ke bawah, tap overlay
+   - role="dialog" aria-modal="true"
+
+3. openConfirmDialog({ title, message, variant = 'danger',
+                       confirmLabel = 'Konfirmasi',
+                       cancelLabel = 'Batal',
+                       onConfirm, onCancel })
+   - Selalu modal ukuran 'sm', TIDAK bisa ditutup klik overlay
+   - Fokus awal pada tombol Cancel
+   - Tombol Confirm: merah jika variant='danger'
+   - role="alertdialog" aria-modal="true"
+
+Export juga: closeModal(), closeBottomSheet()
+
+──────────────────────────────────────────────────────────────
+STEP 1.10 — Router (router.js)
+──────────────────────────────────────────────────────────────
+Buat static/js/router.js.
+
+PENTING: Navigasi menggunakan <a href> biasa ke route Flask,
+BUKAN SPA dynamic import. Flask yang serve template per halaman.
+
+router.js hanya bertanggung jawab untuk:
+
+1. navigate(path):
+   window.location.href = path
+   (Flask handle render templatenya)
+
+2. highlightNav():
+   Baca window.location.pathname, tambah class 'active' dan
+   aria-current="page" ke elemen [data-nav-path] yang cocok.
+   Dipanggil saat DOMContentLoaded.
+
+3. Offline detection:
+   window.addEventListener('online'/'offline', ...):
+   - Offline: tampilkan #offline-banner (remove class 'hidden')
+   - Online: sembunyikan #offline-banner (add class 'hidden')
+
+4. FAB handler:
+   document.getElementById('fab-add').addEventListener('click', ...)
+   Arahkan ke /transactions?new=1 atau buka form via openBottomSheet/openModal
+
+Dipanggil saat DOMContentLoaded.
+
+──────────────────────────────────────────────────────────────
+STEP 1.11 — Global State (state.js)
+──────────────────────────────────────────────────────────────
+Buat static/js/state.js.
+State management ringan, tanpa library.
+
+Export objek AppState:
+
+  _data: { deviceId, currentMonth, currentYear }
+  _subscribers: Map<key, Set<callback>>
+
+  get(key)           : baca nilai
+  set(key, value)    : update + panggil subscriber
+  subscribe(key, fn) : daftar callback, return fungsi unsubscribe
+  getDeviceId()      : baca localStorage atau buat baru
+  getCurrentPeriod() : return { month, year } bulan aktif
+
+Saat inisialisasi:
+  - Set deviceId (baca localStorage 'deviceId' atau buat + simpan)
+  - Set currentMonth dan currentYear ke bulan/tahun hari ini
+
+================================================================
+FASE 2 — HALAMAN HTML + JS BEHAVIOR
+================================================================
+
+Pola untuk setiap halaman:
+  1. Template HTML (templates/*.html):
+     - extends base.html
+     - Tulis SEMUA markup dengan data dummy langsung di HTML
+       (pakai angka/teks hardcode dulu, nanti diganti Jinja)
+     - Berikan id dan data-* attribute yang jelas pada elemen
+       yang akan dimanipulasi JS
+     - Sertakan {% block scripts %} untuk load JS halaman
+
+  2. File JS (static/js/*.js):
+     - HANYA fungsi behavior: event listener, animasi,
+       update textContent/classList, validasi form
+     - TIDAK generate innerHTML struktur baru
+     - Fungsi init() dipanggil dari {% block scripts %}
+
+──────────────────────────────────────────────────────────────
+STEP 2.1 — Halaman Onboarding
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Buat templates/onboarding.html dan static/js/onboarding.js.
+Ikuti design.md section 5 Flow 1.
+
+templates/onboarding.html:
+  - Tidak extends base.html (halaman ini standalone, tidak ada nav/FAB)
+  - Layout fullscreen
+  - 3 slide sudah ada di HTML (display:none kecuali slide aktif):
+    Slide 1: SVG ikon dompet (inline), heading, subtext
+    Slide 2: SVG ikon grafik (inline), heading, subtext
+    Slide 3: SVG ikon gembok (inline), heading, subtext
+  - id="btn-skip", id="btn-next", id="btn-start" (tombol di slide terakhir)
+  - id="dots-container" dengan 3 dot span
+  - Semua warna pakai var(--color-...)
+  - Semua elemen interaktif min-height 44px
+
+static/js/onboarding.js:
+  - Cek localStorage 'onboarded' → jika ada: window.location.href = '/dashboard'
+  - currentSlide = 0, totalSlides = 3
+  - showSlide(index): toggle display/opacity, update dots, update teks tombol
+  - Event: btn-skip → '/dashboard', btn-next → slide berikutnya,
+    btn-start → set localStorage + '/dashboard'
+  - Swipe: touchstart/touchend, delta > 50px → pindah slide
+  - Export: export function init() { ... semua logic di sini ... }
+
+──────────────────────────────────────────────────────────────
+STEP 2.2 — Halaman Dashboard
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Buat templates/dashboard.html dan static/js/dashboard.js.
+Ikuti PERSIS layout S1 di design.md section 6.
+
+templates/dashboard.html:
+  - {% extends "base.html" %}
+  - Tulis markup lengkap dengan data dummy hardcode:
+
+  1. Header:
+     <h1 id="dashboard-month">Keuangan Oktober 2026</h1>
+
+  2. SaldoCard:
+     <section id="saldo-card" aria-label="Ringkasan keuangan">
+       <p class="saldo-label">Saldo</p>
+       <p id="saldo-amount" aria-live="polite" class="tabular-nums">
+         Rp 2.450.000
+       </p>
+       <div class="saldo-detail">
+         <span id="income-amount">↑ Rp 4.000.000</span>
+         <span id="expense-amount">↓ Rp 1.550.000</span>
+       </div>
+     </section>
+
+  3. BudgetSummary:
+     <div id="budget-chips" role="list">
+       <div role="listitem" class="budget-chip budget-chip--safe"
+            data-category-id="...">
+         Makan · 45%
+       </div>
+       ... (3–4 chip dummy)
+     </div>
+
+  4. Section tagihan jatuh tempo (id="bills-section"):
+     Tampilkan 2 item dummy:
+     <article class="bill-item" data-bill-id="...">
+       <span class="bill-name">Kos</span>
+       <span class="bill-days">3 hari lagi</span>
+       <span class="bill-amount">Rp 800.000</span>
+       <button class="btn-mark-paid" data-bill-id="..."
+               data-bill-name="Kos" data-bill-amount="800000"
+               style="min-height:44px">
+         Tandai Lunas
+       </button>
+     </article>
+
+  5. Section transaksi terbaru (id="recent-transactions"):
+     5 item <article class="transaction-item" data-tx-id="...">:
+     <div class="tx-icon" style="background-color: var(--color-primary-100)">🍜</div>
+     <div class="tx-info">
+       <span class="tx-category">Makan</span>
+       <span class="tx-meta">Makan siang · Hari Ini</span>
+     </div>
+     <span class="tx-amount tabular-nums text-expense">−Rp 25.000</span>
+
+  6. Link "Lihat Semua →" href="/transactions"
+
+static/js/dashboard.js:
+  - Import MOCK dari mock.js, formatRupiah dan getMonthYear dari utils.js
+  - Import openConfirmDialog dari modal.js, showToast dari toast.js
+  - export function init():
+    * updateDashboardData(): ambil MOCK.dashboard, isi ke elemen DOM
+      - document.getElementById('dashboard-month').textContent = ...
+      - document.getElementById('saldo-amount').textContent = formatRupiah(...)
+      - etc.
+    * updateSaldoCardColor(): toggle class/style berdasar saldo >= 0
+    * updateBudgetChips(): loop MOCK.budgets, update textContent + class chip
+    * Pasang event 'Tandai Lunas': querySelectorAll('.btn-mark-paid')
+      Klik → openConfirmDialog → update MOCK → showToast → update DOM
+    * Deteksi offline: tampilkan/sembunyikan banner
+
+──────────────────────────────────────────────────────────────
+STEP 2.3 — Halaman Daftar Transaksi
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Buat templates/transactions.html dan static/js/transactions.js.
+Ikuti layout S3 dan S4 dari design.md.
+
+templates/transactions.html:
+  - {% extends "base.html" %}
+  - Search bar: <input id="search-input" type="search"
+                       placeholder="Cari transaksi...">
+  - Filter chips: 3 tombol dengan id="filter-all", "filter-income",
+    "filter-expense" dan data-filter attribute
+  - List transaksi dikelompokkan per tanggal dengan data dummy:
+    <div class="date-group">
+      <div class="date-header">Hari Ini</div>
+      <article class="transaction-item" data-tx-id="..."
+               data-type="expense" data-category="Makan"
+               data-note="Makan siang">
+        ... (markup sesuai design)
+      </article>
+    </div>
+  - Tulis ~10 item dummy dengan beragam tipe dan kategori
+
+static/js/transactions.js:
+  - Import MOCK, utils, modal, toast
+  - export function init():
+    * filterState = { query: '', type: 'all' }
+    * applyFilter(): sembunyikan/tampilkan .transaction-item dan
+      .date-group berdasarkan filterState
+      (gunakan el.style.display = 'none'/'flex', bukan generate ulang HTML)
+    * hideDateGroupIfEmpty(): sembunyikan .date-group jika semua item-nya hidden
+    * Pasang event search-input: input → update filterState.query → applyFilter()
+    * Pasang event filter chips: click → update filterState.type → applyFilter()
+      + toggle class 'active' pada chip
+    * Pasang event .transaction-item: click → openBottomSheet/openModal
+      dengan detail (ambil data dari data-* attribute)
+    * Di detail: tombol Edit → navigate ke /transactions?edit=[id]
+                 tombol Hapus → openConfirmDialog → update MOCK
+                             → sembunyikan elemen dari DOM → showToast
+
+──────────────────────────────────────────────────────────────
+STEP 2.4 — Form Transaksi (Tambah & Edit)
+──────────────────────────────────────────────────────────────
+#File .kiro/specs/pencatatan-keuangan/design.md
+
+Form transaksi muncul sebagai bottom sheet (mobile) / modal (desktop).
+Markup form ada di transactions.html sebagai template tersembunyi,
+JS yang membukanya.
+
+Tambahkan ke templates/transactions.html:
+  <template id="transaction-form-template">
+    <form id="transaction-form" novalidate>
+      <!-- Segmented control jenis -->
+      <div role="group" aria-label="Jenis transaksi" id="type-toggle">
+        <button type="button" data-type="expense" class="active"
+                style="min-height:44px">Pengeluaran</button>
+        <button type="button" data-type="income"
+                style="min-height:44px">Pemasukan</button>
+      </div>
+      <!-- Input nominal -->
+      <label for="tx-amount">Nominal</label>
+      <div class="input-prefix-wrap">
+        <span class="input-prefix">Rp</span>
+        <input id="tx-amount" inputmode="numeric" autocomplete="off">
+      </div>
+      <span id="tx-amount-error" role="alert" class="field-error hidden"></span>
+      <!-- Category picker -->
+      <label>Kategori</label>
+      <button type="button" id="category-picker-btn" style="min-height:44px">
+        <span id="category-picker-label">Pilih kategori</span>
+        <i data-lucide="chevron-down"></i>
+      </button>
+      <span id="tx-category-error" role="alert" class="field-error hidden"></span>
+      <!-- Date -->
+      <label for="tx-date">Tanggal</label>
+      <input id="tx-date" type="date">
+      <!-- Note -->
+      <label for="tx-note">Catatan (opsional)</label>
+      <textarea id="tx-note" maxlength="255"></textarea>
+      <span id="note-counter" class="char-counter">0/255</span>
+      <!-- Submit -->
+      <button type="submit" id="btn-save-tx" style="min-height:44px">
+        Simpan Transaksi
+      </button>
+    </form>
+  </template>
+
+static/js/transactions.js (tambahkan ke init()):
+  - openTransactionForm(txData = null):
+    * Clone <template id="transaction-form-template">
+    * Jika txData: isi semua field dengan data txData
+    * Deteksi viewport: <768px → openBottomSheet, >=768px → openModal
+    * Pasang event type-toggle → filter kategori sesuai tipe
+    * Pasang event category-picker-btn → buka bottom sheet/modal list kategori
+    * Pasang event tx-note input → update note-counter
+    * Pasang event blur per field → validasi inline
+    * Pasang event form submit:
+      - Validasi semua field
+      - Jika valid: update MOCK → closeModal/closeBottomSheet → showToast
+  - Pasang FAB onclick: document.getElementById('fab-add') → openTransactionForm()
+  - Cek URL param ?new=1 → openTransactionForm() otomatis
+
+──────────────────────────────────────────────────────────────
+STEP 2.5 — Manajemen Kategori
+──────────────────────────────────────────────────────────────
+templates/categories.html + static/js/categories.js
+Ikuti layout S5 dan S6 dari design.md.
+
+templates/categories.html:
+  - Tab filter: tombol id="tab-expense" dan id="tab-income"
+  - List <ul id="category-list"> dengan item dummy:
+    <li class="category-item" data-cat-id="..." data-cat-type="expense"
+        data-cat-name="Makan" data-cat-default="true">
+      <div class="cat-icon" style="background: var(--color-primary-100)">🍜</div>
+      <span class="cat-name">Makan</span>
+      <button class="btn-edit-cat" data-cat-id="..."
+              style="min-height:44px" hidden>Edit</button>
+      <button class="btn-delete-cat" data-cat-id="..."
+              style="min-height:44px" hidden>Hapus</button>
+    </li>
+  - Tombol id="btn-add-category"
+  - <template id="category-form-template"> berisi form nama + toggle tipe
+
+static/js/categories.js:
+  - export function init():
+    * Tampilkan tombol edit/hapus hanya untuk non-default
+      (baca data-cat-default, remove 'hidden' jika false)
+    * Tab filter: klik → toggle class 'hidden' pada .category-item
+      berdasarkan data-cat-type
+    * btn-add-category → openBottomSheet/openModal dengan form template
+    * btn-edit-cat → openBottomSheet/openModal dengan form + isi nama
+    * Validasi form kategori: nama kosong, duplikat (cek MOCK)
+    * btn-delete-cat: cek MOCK.transactions → jika ada → dialog pilihan
+      (pindah/batal) → update MOCK → update DOM → showToast
+
+──────────────────────────────────────────────────────────────
+STEP 2.6 — Anggaran per Kategori
+──────────────────────────────────────────────────────────────
+templates/budgets.html + static/js/budgets.js
+Ikuti layout S7 dan S8 dari design.md.
+
+templates/budgets.html:
+  - Header + sub-teks periode
+  - List <ul id="budget-list"> dengan item dummy:
+    <li class="budget-item" data-cat-id="..." data-cat-name="Makan"
+        data-budget-amount="600000" data-spent="480000"
+        style="cursor:pointer; min-height:44px" tabindex="0">
+      <span class="budget-cat-name">Makan</span>
+      <div class="budget-progress-track">
+        <div class="budget-progress-fill"
+             role="progressbar"
+             aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Anggaran Makan: 80% terpakai"
+             style="width:80%">
+        </div>
+      </div>
+      <span class="budget-detail">Rp 480.000 dari Rp 600.000 (80%)</span>
+      <span class="budget-period">Bulanan</span>
+    </li>
+    <li class="budget-item budget-item--no-budget" data-cat-id="..."
+        data-cat-name="Hiburan" style="min-height:44px" tabindex="0">
+      <span class="budget-cat-name">Hiburan</span>
+      <span class="budget-no-set">Belum ada anggaran · Tap untuk set</span>
+    </li>
+  - <template id="budget-form-template"> berisi input nominal + selector periode
+
+static/js/budgets.js:
+  - export function init():
+    * updateProgressBarColors(): loop .budget-progress-fill,
+      baca aria-valuenow → set background-color via CSS var sesuai status
+    * Pasang event .budget-item click/keydown → openBottomSheet/openModal
+      dengan budget form template
+    * Isi form jika item sudah punya budget (data-budget-amount)
+    * Validasi: nominal wajib, angka positif
+    * Submit → update MOCK.budgets → update DOM item (detail, progress bar)
+      → showToast
+
+──────────────────────────────────────────────────────────────
+STEP 2.7 — Laporan & Grafik
+──────────────────────────────────────────────────────────────
+templates/reports.html + static/js/reports.js
+Ikuti layout S9 dari design.md.
+Gunakan Chart.js via CDN (include di {% block head %}).
+
+templates/reports.html:
+  - Period selector tabs: id="tab-this-month", "tab-last-month", "tab-custom"
+  - Custom date range: div id="custom-range" (hidden default):
+    input id="range-start" type="date"
+    input id="range-end" type="date"
+    span id="range-error" role="alert" class="hidden"
+  - Summary card 3 kolom:
+    id="summary-income", id="summary-expense", id="summary-balance"
+  - <canvas id="donut-chart" height="250"></canvas>
+  - div id="donut-legend" (legend kustom)
+  - <canvas id="bar-chart" height="200"></canvas>
+  - Tabel id="category-breakdown"
+  - div id="empty-state" class="hidden" (teks tidak ada transaksi)
+
+static/js/reports.js:
+  - Import MOCK, utils
+  - let donutChart = null, barChart = null (simpan instance Chart.js)
+  - export function init():
+    * currentPeriod = { type: 'this-month', start: ..., end: ... }
+    * calcReportData(start, end): hitung dari MOCK.transactions
+      return { total_income, total_expense, balance, by_category, daily_trend }
+    * renderReport(data):
+      - Update summary: getElementById('summary-income').textContent = ...
+      - Jika data kosong: tampilkan #empty-state, sembunyikan canvas
+      - Render/update donut chart (destroy dulu jika sudah ada)
+      - Render/update bar chart
+      - Render tabel breakdown
+    * Pasang event period tabs → update currentPeriod → renderReport
+    * Pasang event custom range inputs → validasi start > end → renderReport
+    * Inisialisasi dengan data bulan ini saat load
+
+──────────────────────────────────────────────────────────────
+STEP 2.8 — Tagihan Berulang
+──────────────────────────────────────────────────────────────
+templates/recurring_bills.html + static/js/recurring_bills.js
+Ikuti layout S10 dan S11 dari design.md.
+
+templates/recurring_bills.html:
+  - Header + tombol id="btn-add-bill"
+  - List <ul id="bills-list"> dengan item dummy:
+    <li class="bill-item" data-bill-id="..."
+        data-bill-name="Kos" data-bill-amount="800000"
+        data-bill-paid="false">
+      <div class="bill-header">
+        <span class="bill-name">Kos</span>
+        <span class="bill-amount tabular-nums">Rp 800.000</span>
+      </div>
+      <div class="bill-meta">
+        <span class="bill-freq-badge">Bulanan</span>
+        <span class="bill-due">Jatuh tempo: 1 setiap bulan</span>
+      </div>
+      <div class="bill-footer">
+        <span class="bill-status-badge bill-status--today">
+          Jatuh Tempo Hari Ini
+        </span>
+        <button class="btn-mark-paid" data-bill-id="..."
+                style="min-height:44px">Tandai Lunas</button>
+      </div>
+    </li>
+  - <template id="bill-form-template"> berisi form fields
+  - div id="bills-empty" class="hidden"
+
+static/js/recurring_bills.js:
+  - Import MOCK, utils, modal, toast
+  - export function init():
+    * Pasang event .btn-mark-paid → openConfirmDialog
+      → update data-bill-paid di DOM → update badge → showToast
+      → tambah ke MOCK.transactions
+    * Pasang event .bill-item click (bukan tombol) → openBottomSheet
+      dengan detail + tombol Edit dan Hapus
+    * btn-add-bill → openBottomSheet/openModal dengan form template
+    * Validasi + submit form → update MOCK → tambah item ke DOM → showToast
+    * Hapus: openConfirmDialog → hide elemen dari DOM → update MOCK → showToast
+    * Cek bills kosong → toggle #bills-empty
+
+──────────────────────────────────────────────────────────────
+STEP 2.9 — Target Tabungan
+──────────────────────────────────────────────────────────────
+templates/savings.html + static/js/savings.js
+Ikuti layout S12, S13, S14 dari design.md.
+
+templates/savings.html:
+  - Header + summary id="savings-total"
+  - List <ul id="savings-list"> dengan item dummy:
+    <li class="savings-card" data-goal-id="..."
+        data-goal-name="DP Motor" data-target="5000000"
+        data-saved="3000000" data-deadline="2027-03-01"
+        data-status="active">
+      <div class="savings-header">
+        <span class="savings-name">DP Motor</span>
+        <!-- badge muncul jika completed/overdue -->
+      </div>
+      <div class="savings-progress-track">
+        <div class="savings-progress-fill"
+             role="progressbar"
+             aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+             aria-label="Target DP Motor: 60% terkumpul"
+             style="width:60%">
+        </div>
+      </div>
+      <span class="savings-detail">Rp 3.000.000 dari Rp 5.000.000 (60%)</span>
+      <span id="savings-estimate-[id]" class="savings-estimate">
+        Butuh Rp 166.667/bulan untuk mencapai target
+      </span>
+      <button class="btn-add-funds" data-goal-id="..."
+              style="min-height:44px">Tambah Dana</button>
+    </li>
+  - Tombol id="btn-new-goal"
+  - <template id="goal-form-template">
+  - <template id="add-funds-form-template">
+  - div id="savings-empty" class="hidden"
+
+static/js/savings.js:
+  - Import MOCK, utils, modal, toast
+  - calcSavingsEstimate(savedAmount, targetAmount, deadline) → string
+  - export function init():
+    * Update #savings-total dari MOCK
+    * Loop .savings-card → update progress width, aria-valuenow,
+      estimate text, warna fill berdasarkan status
+    * Pasang event .btn-add-funds → openBottomSheet/openModal
+      dengan add-funds form + progress bar saat ini
+    * Submit add-funds → update MOCK → update DOM card → showToast
+      Jika 100%: update status → badge "Selesai" → toast khusus
+    * Pasang event .savings-card click (bukan tombol) → detail + Edit/Hapus
+    * btn-new-goal → openBottomSheet/openModal dengan goal form
+    * Hapus → openConfirmDialog → hide elemen → update MOCK → showToast
+
+──────────────────────────────────────────────────────────────
+STEP 2.10 — Ekspor Data (UI Placeholder)
+──────────────────────────────────────────────────────────────
+templates/export.html + static/js/export.js
+Ikuti layout S15 dari design.md.
+
+templates/export.html:
+  - Header + sub-teks
+  - Section format: 2 tombol toggle id="fmt-excel" (active) dan id="fmt-pdf"
+  - Section periode: 5 chip id="period-[name]"
+  - Custom range: div id="export-custom-range" class="hidden"
+    input id="export-start", input id="export-end"
+    span id="export-range-error" role="alert" class="hidden"
+  - Tombol id="btn-export" disabled style="min-height:44px"
+    "Ekspor Sekarang"
+  - div id="export-status" (kosong)
+
+static/js/export.js:
+  - export function init():
+    * exportState = { format: 'excel', period: null, start: null, end: null }
+    * Pasang event format toggle → update exportState + toggle class 'active'
+    * Pasang event period chips → update exportState → enable/disable btn-export
+    * Jika 'kustom': tampilkan #export-custom-range
+    * Pasang event range inputs → validasi start > end → update error
+    * Pasang event btn-export:
+      - Ubah teks jadi "Menyiapkan file..." + disabled
+      - setTimeout 1500ms → update #export-status dengan info banner
+        "Backend belum terhubung. Ekspor akan aktif setelah integrasi selesai."
+      - Restore tombol
+
+──────────────────────────────────────────────────────────────
+STEP 2.11 — Settings
+──────────────────────────────────────────────────────────────
+templates/settings.html + static/js/settings.js
+Ikuti layout S16 dari design.md.
+
+templates/settings.html:
+  - Section Data & Penyimpanan:
+    <p>Total transaksi: <span id="tx-count">15</span></p>
+    <a href="/export" style="min-height:44px">Ekspor Data →</a>
+    Banner kuning peringatan data lokal
+  - Section Notifikasi:
+    <button id="btn-notif-toggle" role="switch" aria-checked="false"
+            style="min-height:44px">Aktifkan Pengingat</button>
+    <span id="notif-status">Nonaktif</span>
+    <p id="notif-blocked-msg" class="hidden">
+      Aktifkan notifikasi di pengaturan browser Anda
+    </p>
+  - Section Aplikasi:
+    <button id="btn-install-pwa" class="hidden" style="min-height:44px">
+      Instal Aplikasi
+    </button>
+    <p>Versi 1.0.0</p>
+
+static/js/settings.js:
+  - Import MOCK, toast
+  - let deferredInstallPrompt = null
+  - export function init():
+    * Update #tx-count dari MOCK.transactions.length
+    * Pasang window 'beforeinstallprompt' → simpan ke deferredInstallPrompt
+      → remove 'hidden' dari #btn-install-pwa
+    * Cek localStorage 'notif-enabled' → update #notif-status + aria-checked
+    * Pasang event btn-notif-toggle:
+      - Notification.requestPermission()
+      - granted: simpan localStorage, update status, showToast
+      - denied: tampilkan #notif-blocked-msg
+    * Pasang event btn-install-pwa:
+      - deferredInstallPrompt.prompt()
+
+──────────────────────────────────────────────────────────────
+STEP 2.12 — Responsive & Accessibility Pass
+──────────────────────────────────────────────────────────────
+Review templates dan CSS untuk memastikan responsive dan
+accessibility bekerja di semua breakpoint.
+
+Cek di templates (HTML attributes):
+□ Semua tombol interaktif style="min-height:44px" atau class
+□ nav[aria-label="Navigasi utama"] di base.html
+□ Setiap progress bar: role="progressbar" aria-valuenow
+  aria-valuemin="0" aria-valuemax="100" aria-label yang deskriptif
+□ SaldoCard: aria-live="polite" pada elemen nominal
+□ Error span: role="alert" aria-live="assertive"
+□ Modal/sheet: role="dialog" aria-modal="true" aria-labelledby (di modal.js)
+□ Focus kembali ke trigger element saat modal ditutup (di modal.js)
+
+Cek di CSS (main.css):
+□ Media query <768px: bottom nav visible, sidebar hidden
+□ Media query >=1024px: sidebar visible, bottom nav hidden
+□ #page-content margin-left 240px di desktop
+□ FAB posisi benar di semua breakpoint
+
+================================================================
+CATATAN UNTUK FASE 3 & 4
+================================================================
+
+Setelah Fase 2 selesai:
+- Fase 3: implementasi route API di main.py + koneksi MongoDB
+- Fase 4: ganti MOCK.* di setiap JS file dengan fetch ke API
+
+Cara migrasi JS saat Fase 4:
+- Ganti: const data = MOCK.transactions
+- Jadi : const data = await apiFetch('/api/transactions')
+- Template HTML tidak perlu diubah (markup sudah benar)
+- Hanya logic pengambilan data di JS yang berubah
+
+================================================================

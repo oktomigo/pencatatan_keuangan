@@ -1,0 +1,316 @@
+================================================================
+RENCANA KERJA — APLIKASI PENCATATAN KEUANGAN HARIAN
+Urutan: UI/Frontend dulu → Backend setelahnya
+Stack : Vanilla JS + Tailwind CSS (UI) | Flask + MongoDB (API)
+================================================================
+
+PRINSIP KERJA:
+- Fase 1–2 = UI & frontend sepenuhnya, data pakai mock object JS
+- Fase 3+   = backend Flask + MongoDB, UI disambung ke API nyata
+- Setiap step dikerjakan satu per satu, jangan loncat
+- Selalu baca design.md sebelum mulai step UI apapun
+
+ARSITEKTUR FRONTEND:
+- HTML markup ada di templates/ (Jinja2, dirender Flask per route)
+- static/js/ HANYA fungsi JS murni — behavior, event listener,
+  animasi, validasi, update DOM — TIDAK generate HTML baru
+- static/css/ berisi tokens.css dan main.css
+- Flask serve satu template per route, bukan SPA
+
+================================================================
+STRUKTUR PROJECT
+================================================================
+
+pecatatan_keuangan/
+├── main.py                        ← Flask app, semua route
+├── templates/
+│   ├── base.html                  ← layout shell (nav, FAB, toast)
+│   ├── onboarding.html
+│   ├── dashboard.html
+│   ├── transactions.html
+│   ├── categories.html
+│   ├── budgets.html
+│   ├── reports.html
+│   ├── recurring_bills.html
+│   ├── savings.html
+│   ├── export.html
+│   └── settings.html
+└── static/
+    ├── manifest.json
+    ├── service-worker.js
+    ├── css/
+    │   ├── tokens.css             ← design tokens
+    │   └── main.css               ← global styles
+    └── js/
+        ├── utils.js               ← formatRupiah, formatDate, dll
+        ├── mock.js                ← data dummy (JS object)
+        ├── state.js               ← state global sederhana
+        ├── api.js                 ← fetch wrapper ke Flask API
+        ├── toast.js               ← fungsi showToast()
+        ├── modal.js               ← openModal(), openBottomSheet()
+        ├── router.js              ← highlightNav(), offline detection
+        ├── onboarding.js          ← slide behavior, swipe gesture
+        ├── dashboard.js           ← isi data ke DOM, event handler
+        ├── transactions.js        ← filter, search, form handler
+        ├── categories.js          ← CRUD kategori, event handler
+        ├── budgets.js             ← progress bar, form handler
+        ├── reports.js             ← Chart.js init & update
+        ├── recurring_bills.js     ← mark as paid, form handler
+        ├── savings.js             ← progress update, form handler
+        ├── export.js              ← form handler, simulasi ekspor
+        └── settings.js            ← notif permission, PWA install
+
+================================================================
+FASE 1 — FONDASI
+(Buat semua file dasar sebelum mulai halaman)
+================================================================
+
+STEP 1.1 — Struktur Folder & File Kosong
+  Buat semua folder dan file sesuai struktur di atas.
+  Setiap template: skeleton Jinja2 yang extends base.html.
+  Setiap JS: komentar satu baris + export function init() kosong.
+  main.py: semua route (GET per halaman + API placeholder).
+
+STEP 1.2 — Design Tokens CSS (static/css/tokens.css)
+  Semua CSS custom properties dari design.md section 3:
+  - Warna (--color-primary-*, success, warning, danger, info,
+    surface, text hierarchy, border)
+  - Tipografi (--text-display, heading, body, caption, number)
+  - Spacing (--space-1 sampai --space-20, base 4px)
+  - Border radius (--rounded-sm sampai --rounded-full)
+  - Shadow (--shadow-sm sampai --shadow-nav)
+  - Transition (--transition-fast sampai --transition-spring)
+
+STEP 1.3 — Global Styles & Font (static/css/main.css)
+  - Import tokens.css
+  - Load font Plus Jakarta Sans dari Google Fonts
+  - Base reset minimal
+  - Utility: .text-income, .text-expense, .tabular-nums,
+    .skeleton (animasi shimmer), .visually-hidden
+  - Layout shell: #bottom-nav (visible <1024px), #sidebar-nav
+    (visible >=1024px), #fab-add, #page-content
+
+STEP 1.4 — base.html (Layout Shell)
+  Jinja2 template dengan:
+  - <head>: Tailwind CDN, Lucide CDN, tokens.css, main.css
+  - Offline banner (id="offline-banner", hidden)
+  - Toast container (id="toast-container", kosong)
+  - <main id="page-content">: {% block content %}{% endblock %}
+  - Bottom nav: 5 <a> dengan href Flask + data-nav-path
+  - Sidebar: sama dengan bottom nav
+  - FAB: <button id="fab-add">
+  - Scripts: Lucide init + router.js + {% block scripts %}
+
+STEP 1.5 — main.py (Flask Routes)
+  Route halaman (GET → render_template):
+    /onboarding, /dashboard, /transactions, /categories,
+    /budgets, /reports, /recurring-bills, /savings,
+    /export, /settings
+  Route API placeholder (return jsonify):
+    GET/POST /api/transactions
+    PUT/DELETE /api/transactions/<id>
+    GET/POST /api/categories
+    GET/POST /api/budgets
+    GET /api/dashboard
+
+STEP 1.6 — utils.js
+  Export: formatRupiah, formatDate, getMonthYear, daysFromNow,
+  calcPercentage, getBudgetStatus, generateDeviceId, today
+
+STEP 1.7 — mock.js
+  Export MOCK object: categories (11), transactions (15),
+  budgets (4), recurringBills (3), savingsGoals (3), dashboard
+  Data konsisten (category_id nyambung antar entitas)
+
+STEP 1.8 — toast.js
+  Export showToast(message, variant, duration)
+  Inject <div> toast ke #toast-container yang sudah ada
+  Animasi via CSS class, auto-dismiss, stack max 3
+
+STEP 1.9 — modal.js
+  Export openModal, openBottomSheet, openConfirmDialog,
+  closeModal, closeBottomSheet
+  Inject overlay + panel ke body — bukan generate halaman baru
+  Focus trap, focus restore, keyboard (Escape)
+
+STEP 1.10 — router.js
+  Navigasi pakai window.location.href = path (Flask serve template)
+  Export: navigate(path), highlightNav()
+  Pasang offline/online event listener
+  FAB onclick handler
+
+STEP 1.11 — state.js
+  Export AppState: get, set, subscribe, getDeviceId, getCurrentPeriod
+  Init deviceId dari localStorage (buat jika belum ada)
+
+================================================================
+FASE 2 — HALAMAN HTML + JS BEHAVIOR
+================================================================
+
+Pola per halaman:
+  templates/*.html : markup lengkap + data dummy hardcode di HTML
+                     id dan data-* attribute pada elemen yang akan
+                     dimanipulasi JS
+  static/js/*.js   : init() yang pasang event listener + update DOM
+
+STEP 2.1 — Onboarding
+  templates/onboarding.html  : standalone (tidak extends base.html)
+                                3 slide sudah ada di HTML
+  static/js/onboarding.js    : slide behavior, swipe gesture,
+                                cek localStorage 'onboarded'
+
+STEP 2.2 — Dashboard
+  templates/dashboard.html   : markup lengkap — SaldoCard,
+                                BudgetChips, BillsSection,
+                                RecentTransactions (5 item dummy)
+  static/js/dashboard.js     : isi data dari MOCK ke DOM,
+                                warna dinamis SaldoCard,
+                                event Tandai Lunas
+
+STEP 2.3 — Daftar Transaksi
+  templates/transactions.html: search bar, filter chips,
+                                ~10 transaction-item dummy
+                                dikelompokkan per tanggal
+  static/js/transactions.js  : filter (show/hide elemen),
+                                search real-time,
+                                tap item → detail sheet/modal
+
+STEP 2.4 — Form Transaksi
+  Tambah ke transactions.html: <template id="transaction-form-template">
+  Tambah ke transactions.js  : openTransactionForm(txData),
+                                validasi inline, simpan ke MOCK,
+                                FAB onclick, cek ?new=1 di URL
+
+STEP 2.5 — Manajemen Kategori
+  templates/categories.html  : tab filter, list kategori dummy,
+                                tombol tambah
+  static/js/categories.js    : tab filter (show/hide),
+                                CRUD via modal/sheet,
+                                validasi duplikat, cek transaksi
+
+STEP 2.6 — Anggaran per Kategori
+  templates/budgets.html     : list budget-item dengan progress bar
+                                dan data-* attribute
+  static/js/budgets.js       : warna progress bar otomatis,
+                                tap → form anggaran,
+                                update DOM setelah simpan
+
+STEP 2.7 — Laporan & Grafik
+  templates/reports.html     : period tabs, canvas donut + bar,
+                                summary card, tabel breakdown
+  static/js/reports.js       : hitung dari MOCK.transactions,
+                                init Chart.js, update saat period berubah
+
+STEP 2.8 — Tagihan Berulang
+  templates/recurring_bills.html : list bill-item dummy dengan badge
+  static/js/recurring_bills.js   : mark as paid → confirm → update DOM,
+                                    form tambah/edit, hapus
+
+STEP 2.9 — Target Tabungan
+  templates/savings.html     : list savings-card dengan progress bar
+  static/js/savings.js       : update progress, tambah dana → update DOM,
+                                100% → badge selesai + toast khusus
+
+STEP 2.10 — Ekspor Data (Placeholder)
+  templates/export.html      : form format + periode
+  static/js/export.js        : toggle format, pilih periode,
+                                simulasi loading → pesan placeholder
+
+STEP 2.11 — Settings
+  templates/settings.html    : tx-count, notif toggle, btn install
+  static/js/settings.js      : Notification.permission, PWA install prompt
+
+STEP 2.12 — Responsive & Accessibility Pass
+  Review semua template dan CSS:
+  - Breakpoint mobile/tablet/desktop sesuai design.md section 9
+  - ARIA attributes lengkap sesuai design.md section 10
+  - Touch target min 44px semua elemen interaktif
+  - Focus trap dan focus restore di modal/sheet
+  - Tab order logis
+
+================================================================
+FASE 3 — BACKEND FLASK + MONGODB
+(Dikerjakan setelah semua UI di Fase 1–2 selesai dan oke)
+================================================================
+
+STEP 3.1 — Setup Backend
+  requirements.txt: flask, pymongo, flask-cors, openpyxl, fpdf2,
+                    python-dotenv
+  config.py, .env.example
+
+STEP 3.2 — Anonymous Identity & Middleware
+  Middleware baca header X-Device-ID
+  POST /api/init: buat device + seed kategori default di MongoDB
+
+STEP 3.3 — Backend Kategori
+  Model + CRUD routes
+  Seed default saat device baru
+  Validasi duplikat, cek transaksi terkait saat hapus
+
+STEP 3.4 — Backend Transaksi
+  Model + CRUD routes
+  Validasi semua field sesuai requirements.md Requirement 1
+  Filter by month/year/type
+
+STEP 3.5 — Backend Dashboard
+  GET /api/dashboard: aggregasi saldo, recent transactions,
+  upcoming bills, budget summary
+
+STEP 3.6 — Backend Anggaran
+  Model + CRUD + perhitungan persentase + status
+
+STEP 3.7 — Backend Laporan
+  GET /api/reports: aggregasi per kategori + tren harian
+
+STEP 3.8 — Backend Tagihan Berulang
+  Model + CRUD + mark-as-paid (auto-create transaksi)
+  Hitung next_due berdasarkan frekuensi
+
+STEP 3.9 — Backend Target Tabungan
+  Model + CRUD + add-funds
+  Update status (active/completed/overdue), estimasi bulanan
+
+STEP 3.10 — Backend Ekspor
+  generate_excel() dengan openpyxl
+  generate_pdf() dengan fpdf2
+  POST /api/export → file download
+
+================================================================
+FASE 4 — INTEGRASI UI + BACKEND
+(Sambungkan setiap JS file ke endpoint Flask nyata)
+================================================================
+
+Pola migrasi per halaman:
+  Sebelum : const data = MOCK.transactions
+  Sesudah : const data = await apiFetch('/api/transactions')
+  Template HTML tidak berubah
+
+STEP 4.1 — api.js: apiFetch() wrapper + X-Device-ID header
+STEP 4.2 — Sambung Kategori
+STEP 4.3 — Sambung Transaksi
+STEP 4.4 — Sambung Dashboard
+STEP 4.5 — Sambung Anggaran
+STEP 4.6 — Sambung Laporan
+STEP 4.7 — Sambung Tagihan Berulang
+STEP 4.8 — Sambung Target Tabungan
+STEP 4.9 — Sambung Ekspor (download file nyata)
+STEP 4.10 — PWA & Final
+  manifest.json lengkap, service-worker.js (CacheFirst),
+  Lighthouse score >= 90, test end-to-end
+
+================================================================
+RINGKASAN
+================================================================
+
+  Fase 1  : Fondasi (Step 1.1–1.11)       → semua file dasar
+  Fase 2  : Halaman UI, data mock          (Step 2.1–2.12)
+  Fase 3  : Backend Flask + MongoDB        (Step 3.1–3.10)
+  Fase 4  : Integrasi UI ↔ Backend         (Step 4.1–4.10)
+
+  Total: 43 step
+
+  Setelah Fase 2 selesai: tampilan 100% bisa dilihat di browser
+  meskipun data masih dummy.
+  Fase 3–4 hanya "menghidupkan" data yang sudah terlihat.
+
+================================================================

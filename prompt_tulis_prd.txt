@@ -1,0 +1,27 @@
+Kamu adalah senior product manager. Saya butuh PRD
+lengkap untuk produk di bawah ini.
+
+Ide produk: "Website yang bisa mencatat pengeluaran dan pemasukan sehari hari, dimana website ini dapat menjadi penunjang nantinya untuk hal hal yang lebih kompleks.
+diharapkan aplikasi akan digunakan oleh anak kos, yang memiliki budget terbatas dan perlu mengatur keuangan dengan baik serta untuk orang yang sudah berkeluarga
+yang mengalami kesulitan dalam mengatur keuangannya. dan juga diharapkan aplikasi dapat memiliki fitur fitur yang berfungsi untuk membantu mereka.
+
+Sebelum menulis apa pun, tanyakan maksimal 5 pertanyaan
+klarifikasi soal target user, scope must-have vs nice-to-have,
+batasan teknis, dan seperti apa "selesai" itu. Tunggu jawaban
+saya.
+
+Lalu buat PRD dengan bagian berikut:
+1. Problem statement — siapa yang dirugikan dan kenapa
+2. Target user + 2 persona
+3. Goals dan non-goals
+4. User stories format "Sebagai..., saya ingin... supaya..."
+5. Daftar fitur dibagi MVP / v2 / nanti
+6. Functional requirement detail per fitur MVP
+7. Sketsa data model (entitas + field kunci)
+8. Edge case dan failure state
+9. Success metrics
+10. Open questions
+
+Spesifik dan tegas. Tanpa basa-basi. Kalau ada requirement
+ambigu, tandai sebagai pertanyaan terbuka, jangan mengarang
+sendiri.

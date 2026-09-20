@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Laporan — CatatUang{% endblock %}
+
+{% block head %}
+<!-- Chart.js CDN — dibutuhkan oleh reports.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Konten laporan diisi oleh reports.js -->
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { init } from "{{ url_for('static', filename='js/reports.js') }}";
+  init();
+</script>
+{% endblock %}

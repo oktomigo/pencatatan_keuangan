@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Tagihan Berulang — CatatUang{% endblock %}
+
+{% block content %}
+<!-- Konten tagihan berulang diisi oleh recurring_bills.js -->
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { init } from "{{ url_for('static', filename='js/recurring_bills.js') }}";
+  init();
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+Berperanlah sebagai application security engineer yang melakukan audit pre-launch pada codebase ini.
+
+Review untuk:
+- Kelemahan autentikasi dan session handling
+- Celah otorisasi (bisa nggak user A akses data user B?)
+- Secret, key, atau token hardcoded; apapun sensitif yang terekspos di client-side
+- Risiko injection (SQL, NoSQL, command, XSS)
+- API route yang tidak dilindungi atau tidak divalidasi
+- Input validation dan sanitization yang hilang
+- Rate limiting / proteksi brute force yang hilang
+- Insecure direct object reference
+- CORS terlalu longgar, security header hilang, cookie flag tidak aman
+- Dependency yang sudah diketahui rentan
+- Data sensitif yang bocor ke log atau error response
+
+Untuk tiap temuan, berikan:
+- Severity: Critical / High / Medium / Low
+- File dan baris
+- Cara nyatanya dieksploitasi
+- Fix kode yang pasti
+
+Lalu urutkan semua temuan berdasarkan severity. JANGAN ubah kode apapun sebelum saya approve. Kalau satu kategori bersih, katakan eksplisit, jangan diam saja.

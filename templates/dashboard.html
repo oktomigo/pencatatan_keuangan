@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Beranda — CatatUang{% endblock %}
+
+{% block content %}
+<!-- Konten dashboard diisi oleh dashboard.js -->
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { init } from "{{ url_for('static', filename='js/dashboard.js') }}";
+  init();
+</script>
+{% endblock %}

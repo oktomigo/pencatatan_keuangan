@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0D9488" />
+  <title>Selamat Datang — CatatUang</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <!-- Onboarding standalone — tidak extends base.html, tidak ada nav/FAB -->
+  <div id="onboarding-container"></div>
+
+  <script type="module">
+    import { init } from "{{ url_for('static', filename='js/onboarding.js') }}";
+    init();
+  </script>
+</body>
+</html>

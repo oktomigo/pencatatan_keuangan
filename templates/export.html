@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Ekspor Data — CatatUang{% endblock %}
+
+{% block content %}
+<!-- Konten ekspor diisi oleh export.js -->
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { init } from "{{ url_for('static', filename='js/export.js') }}";
+  init();
+</script>
+{% endblock %}

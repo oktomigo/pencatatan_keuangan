@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Transaksi — CatatUang{% endblock %}
+
+{% block content %}
+<!-- Konten transaksi diisi oleh transactions.js -->
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { init } from "{{ url_for('static', filename='js/transactions.js') }}";
+  init();
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Tabungan — CatatUang{% endblock %}
+
+{% block content %}
+<!-- Konten tabungan diisi oleh savings.js -->
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+  import { init } from "{{ url_for('static', filename='js/savings.js') }}";
+  init();
+</script>
+{% endblock %}

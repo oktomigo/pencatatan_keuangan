@@ -1,0 +1,24 @@
+Kamu adalah senior product designer. Berdasarkan PRD di
+atas, buatkan design brief lengkap sebelum satu baris kode
+pun ditulis.
+
+Hasilkan:
+1. Design principles — 3 aturan yang wajib dipatuhi UI ini
+2. Visual direction — mood, referensi, apa yang dihindari
+3. Design tokens — palet warna + hex, skala tipografi,
+   skala spacing, radius, shadow
+4. Screen inventory — setiap screen beserta tujuannya
+5. User flow — langkah demi langkah tiap journey utama
+6. Layout per screen — section, hierarki, primary action,
+   komponen yang dipakai
+7. Component library — tiap komponen reusable + variant
+   dan state-nya
+8. State — empty, loading, error, success, offline untuk
+   tiap screen kunci
+9. Responsive behaviour — mobile, tablet, desktop
+10. Accessibility — rasio kontras, focus order, keyboard
+    nav, kebutuhan ARIA
+
+Ambil keputusan yang tegas dan jelaskan alasannya. Hindari
+default yang generic. Kalau pilih font atau warna, jelaskan
+kenapa itu cocok untuk produk ini.

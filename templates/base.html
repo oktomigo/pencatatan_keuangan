@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0D9488" />
+  <title>{% block title %}CatatUang{% endblock %}</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.svg') }}" />
+
+  <!-- Design Tokens & Global Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <!-- ============================================================
+       OFFLINE BANNER
+       Tersembunyi secara default, ditampilkan oleh router.js
+       saat navigator.onLine = false
+  ============================================================ -->
+  <div id="offline-banner"
+       class="hidden"
+       role="status"
+       aria-live="polite"
+       style="
+         position: fixed;
+         top: 0; left: 0; right: 0;
+         z-index: 9999;
+         padding: var(--space-3) var(--space-4);
+         background: var(--color-info-50);
+         color: var(--color-info-700);
+         font-size: var(--text-body-md);
+         text-align: center;
+         border-bottom: 1px solid var(--color-info-500);
+       ">
+    <span>📡 Mode Offline — Data tersimpan lokal</span>
+  </div>
+
+  <!-- ============================================================
+       TOAST CONTAINER
+       Kosong — diisi oleh toast.js via showToast()
+  ============================================================ -->
+  <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ============================================================
+       KONTEN HALAMAN UTAMA
+  ============================================================ -->
+  <main id="page-content" role="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ============================================================
+       BOTTOM NAVIGATION — Mobile (<1024px)
+  ============================================================ -->
+  <div id="bottom-nav">
+    <nav aria-label="Navigasi utama">
+      <a href="/dashboard" data-nav-path="/dashboard" class="nav-item">
+        <i data-lucide="home"></i>
+        <span>Beranda</span>
+      </a>
+      <a href="/transactions" data-nav-path="/transactions" class="nav-item">
+        <i data-lucide="list"></i>
+        <span>Transaksi</span>
+      </a>
+      <a href="/reports" data-nav-path="/reports" class="nav-item">
+        <i data-lucide="bar-chart-2"></i>
+        <span>Laporan</span>
+      </a>
+      <a href="/savings" data-nav-path="/savings" class="nav-item">
+        <i data-lucide="piggy-bank"></i>
+        <span>Tabungan</span>
+      </a>
+      <a href="/settings" data-nav-path="/settings" class="nav-item">
+        <i data-lucide="menu"></i>
+        <span>Lainnya</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- ============================================================
+       SIDEBAR NAVIGATION — Desktop (>=1024px)
+  ============================================================ -->
+  <div id="sidebar-nav">
+    <div class="sidebar-logo">
+      <span>💰</span>
+      <span class="sidebar-app-name">CatatUang</span>
+    </div>
+    <nav aria-label="Navigasi utama">
+      <a href="/dashboard" data-nav-path="/dashboard" class="nav-item">
+        <i data-lucide="home"></i>
+        <span>Beranda</span>
+      </a>
+      <a href="/transactions" data-nav-path="/transactions" class="nav-item">
+        <i data-lucide="list"></i>
+        <span>Transaksi</span>
+      </a>
+      <a href="/reports" data-nav-path="/reports" class="nav-item">
+        <i data-lucide="bar-chart-2"></i>
+        <span>Laporan</span>
+      </a>
+      <a href="/savings" data-nav-path="/savings" class="nav-item">
+        <i data-lucide="piggy-bank"></i>
+        <span>Tabungan</span>
+      </a>
+      <a href="/settings" data-nav-path="/settings" class="nav-item">
+        <i data-lucide="menu"></i>
+        <span>Lainnya</span>
+      </a>
+    </nav>
+  </div>
+
+  <!-- ============================================================
+       FAB — Catat Transaksi Baru
+  ============================================================ -->
+  <button id="fab-add"
+          aria-label="Catat transaksi baru"
+          aria-expanded="false"
+          type="button">
+    <i data-lucide="plus"></i>
+  </button>
+
+  <!-- ============================================================
+       SCRIPTS
+  ============================================================ -->
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>lucide.createIcons();</script>
+
+  <!-- Router (highlight nav aktif, offline detection, FAB) -->
+  <script type="module" src="{{ url_for('static', filename='js/router.js') }}"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('{{ url_for('static', filename='service-worker.js') }}')
+        .catch(() => {
+          const banner = document.getElementById('offline-banner');
+          if (banner) {
+            banner.classList.remove('hidden');
+            banner.textContent = 'Fitur offline tidak tersedia di browser ini.';
+          }
+        });
+    }
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
