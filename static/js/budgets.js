@@ -1,7 +1,7 @@
 // budgets.js - anggaran dan progress realtime dari API.
 
 import { apiFetch, ApiError } from './api.js';
-import { formatRupiah } from './utils.js';
+import { formatRupiah, rupiahInput, rupiahInputValue } from './utils.js';
 import { openModal, openBottomSheet, openConfirmDialog, closeModal, closeBottomSheet } from './modal.js';
 import { showToast } from './toast.js';
 
@@ -99,21 +99,23 @@ function createUnbudgetedItem(category) {
 function openBudgetForm(budget) {
   const existing = Boolean(budget.id);
   const isMobile = window.innerWidth < 768;
-  const content = `<form id="budget-form" novalidate><p style="margin-bottom:var(--space-4);color:var(--color-text-secondary)">${escapeHtml(budget.category_name || 'Kategori')}</p><label for="budget-amount" style="display:block;margin-bottom:var(--space-2);font-weight:600">Nominal Anggaran</label><input id="budget-amount" type="number" min="1" max="${MAX_AMOUNT}" step="1" inputmode="numeric" value="${existing ? budget.amount : ''}" style="width:100%;min-height:48px;padding:0 var(--space-3);font-variant-numeric:tabular-nums;border:1px solid var(--color-border-light);border-radius:var(--rounded-md)"/><p id="budget-amount-error" class="hidden" role="alert" style="margin-top:var(--space-2);color:var(--color-danger-700)"></p><label style="display:block;margin:var(--space-4) 0 var(--space-2);font-weight:600">Periode</label><div id="budget-period-toggle" style="display:flex;gap:var(--space-2)"><button type="button" data-period="monthly" style="flex:1;min-height:44px;border-radius:var(--rounded-md)">Bulanan</button><button type="button" data-period="weekly" style="flex:1;min-height:44px;border-radius:var(--rounded-md)">Mingguan</button></div><button id="budget-submit" type="submit" style="width:100%;min-height:48px;margin-top:var(--space-5);border-radius:var(--rounded-md);background:var(--color-primary-500);color:#fff;font-weight:600">Simpan Anggaran</button></form>`;
+  const content = `<form id="budget-form" novalidate><p style="margin-bottom:var(--space-4);color:var(--color-text-secondary)">${escapeHtml(budget.category_name || 'Kategori')}</p><label for="budget-amount" style="display:block;margin-bottom:var(--space-2);font-weight:600">Nominal Anggaran</label><input id="budget-amount" type="text" inputmode="numeric" value="${existing ? budget.amount : ''}" style="width:100%;min-height:48px;padding:0 var(--space-3);font-variant-numeric:tabular-nums;border:1px solid var(--color-border-light);border-radius:var(--rounded-md)"/><p id="budget-amount-error" class="hidden" role="alert" style="margin-top:var(--space-2);color:var(--color-danger-700)"></p><label style="display:block;margin:var(--space-4) 0 var(--space-2);font-weight:600">Periode</label><div id="budget-period-toggle" style="display:flex;gap:var(--space-2)"><button type="button" data-period="monthly" style="flex:1;min-height:44px;border-radius:var(--rounded-md)">Bulanan</button><button type="button" data-period="weekly" style="flex:1;min-height:44px;border-radius:var(--rounded-md)">Mingguan</button></div><button id="budget-submit" type="submit" style="width:100%;min-height:48px;margin-top:var(--space-5);border-radius:var(--rounded-md);background:var(--color-primary-500);color:#fff;font-weight:600">Simpan Anggaran</button></form>`;
   (isMobile ? openBottomSheet : openModal)({ title: existing ? `Edit Anggaran ${budget.category_name}` : `Set Anggaran ${budget.category_name}`, contentHTML: content });
   setTimeout(() => {
     const form = document.getElementById('budget-form');
     if (!form) return;
+    const amountInput = form.querySelector('#budget-amount');
+    rupiahInput(amountInput);
     let period = budget.period || 'monthly';
     const periodButtons = [...form.querySelectorAll('[data-period]')];
     const stylePeriod = () => periodButtons.forEach(button => { const active = button.dataset.period === period; button.style.background = active ? 'var(--color-primary-500)' : 'var(--color-surface-raised)'; button.style.color = active ? '#fff' : 'var(--color-text-secondary)'; });
     periodButtons.forEach(button => button.addEventListener('click', () => { period = button.dataset.period; stylePeriod(); }));
     stylePeriod();
-    form.querySelector('#budget-amount').addEventListener('input', () => clearFieldError(form.querySelector('#budget-amount'), form.querySelector('#budget-amount-error')));
+    amountInput.addEventListener('input', () => clearFieldError(amountInput, form.querySelector('#budget-amount-error')));
     form.addEventListener('submit', async event => {
       event.preventDefault();
-      const amount = Number(form.querySelector('#budget-amount').value);
-      if (!Number.isInteger(amount) || amount <= 0 || amount > MAX_AMOUNT) { showFieldError(form.querySelector('#budget-amount'), form.querySelector('#budget-amount-error'), 'Nominal anggaran tidak valid'); return; }
+      const amount = rupiahInputValue(amountInput);
+      if (isNaN(amount) || !Number.isInteger(amount) || amount <= 0 || amount > MAX_AMOUNT) { showFieldError(amountInput, form.querySelector('#budget-amount-error'), 'Nominal anggaran tidak valid'); return; }
       const submit = form.querySelector('#budget-submit'); submit.disabled = true; submit.textContent = 'Menyimpan...';
       try {
         const path = existing ? `/api/budgets/${encodeURIComponent(budget.id)}` : '/api/budgets';
@@ -129,7 +131,7 @@ function openBudgetForm(budget) {
           if (duplicate) { closeForm(isMobile); openBudgetForm(duplicate); }
           else showToast('Anggaran kategori ini sudah ada', 'error');
         } else if (error.fields?.amount || error.message === 'Nominal anggaran tidak valid') {
-          showFieldError(form.querySelector('#budget-amount'), form.querySelector('#budget-amount-error'), error.fields?.amount || 'Nominal anggaran tidak valid');
+          showFieldError(amountInput, form.querySelector('#budget-amount-error'), error.fields?.amount || 'Nominal anggaran tidak valid');
         } else showToast(error.message || 'Gagal memuat data. Coba refresh halaman.', 'error');
         submit.disabled = false; submit.textContent = 'Simpan Anggaran';
       }

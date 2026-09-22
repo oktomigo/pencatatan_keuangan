@@ -1,7 +1,7 @@
 // transactions.js - daftar, filter, dan CRUD transaksi berbasis API.
 
 import { apiFetch, ApiError } from './api.js';
-import { formatRupiah, formatDate, today } from './utils.js';
+import { formatRupiah, formatDate, today, rupiahInput, rupiahInputValue } from './utils.js';
 import {
   openModal,
   openBottomSheet,
@@ -321,7 +321,7 @@ function openTransactionForm(transaction = null) {
         <button type="button" data-type="income" style="flex:1;min-height:44px;border-radius:var(--rounded-md)">Pemasukan</button>
       </div>
       <label for="tx-amount" style="display:block;margin-bottom:var(--space-2);font-weight:600">Nominal</label>
-      <input id="tx-amount" type="number" min="1" max="${MAX_AMOUNT}" step="1" inputmode="numeric" required value="${isEdit ? transaction.amount : ''}" style="width:100%;min-height:48px;padding:0 var(--space-3);font-size:var(--text-number-md);font-variant-numeric:tabular-nums;border:1px solid var(--color-border-light);border-radius:var(--rounded-md)" />
+      <input id="tx-amount" type="text" inputmode="numeric" required value="${isEdit ? transaction.amount : ''}" style="width:100%;min-height:48px;padding:0 var(--space-3);font-size:var(--text-number-md);font-variant-numeric:tabular-nums;border:1px solid var(--color-border-light);border-radius:var(--rounded-md)" />
       <p id="tx-amount-error" class="hidden" role="alert" style="margin-top:var(--space-2);color:var(--color-danger-700);font-size:var(--text-body-md)"></p>
       <label for="tx-category" style="display:block;margin:var(--space-4) 0 var(--space-2);font-weight:600">Kategori</label>
       <select id="tx-category" required style="width:100%;min-height:44px;padding:0 var(--space-3);border:1px solid var(--color-border-light);border-radius:var(--rounded-md)"><option value="">Memuat kategori...</option></select>
@@ -350,11 +350,14 @@ function openTransactionForm(transaction = null) {
       await populateCategories(categorySelect, selectedType);
     }));
     styleTypeButtons(typeButtons, selectedType);
+    const amountInput = form.querySelector('#tx-amount');
+    rupiahInput(amountInput);
+    amountInput.addEventListener('input', () => clearFormError(amountInput, form.querySelector('#tx-amount-error')));
     form.querySelector('#tx-note').addEventListener('input', event => {
       form.querySelector('#note-counter').textContent = `${event.target.value.length}/255`;
       clearFormError(form.querySelector('#tx-note'), form.querySelector('#tx-note-error'));
     });
-    ['tx-amount', 'tx-category', 'tx-date'].forEach(id => {
+    ['tx-category', 'tx-date'].forEach(id => {
       form.querySelector(`#${id}`)?.addEventListener('input', () => clearFormError(form.querySelector(`#${id}`), form.querySelector(`#${id}-error`)));
       form.querySelector(`#${id}`)?.addEventListener('change', () => clearFormError(form.querySelector(`#${id}`), form.querySelector(`#${id}-error`)));
     });
@@ -395,7 +398,7 @@ async function submitTransaction(event, form, existing, type, isMobile) {
   submit.textContent = 'Menyimpan...';
   const body = {
     type,
-    amount: Number(form.querySelector('#tx-amount').value),
+    amount: rupiahInputValue(form.querySelector('#tx-amount')),
     category_id: form.querySelector('#tx-category').value,
     date: form.querySelector('#tx-date').value,
     note: form.querySelector('#tx-note').value.trim(),
@@ -422,10 +425,9 @@ async function submitTransaction(event, form, existing, type, isMobile) {
 
 function validateForm(form) {
   const errors = {};
-  const amountRaw = form.querySelector('#tx-amount').value;
-  const amount = Number(amountRaw);
-  if (!amountRaw) errors.amount = 'Nominal wajib diisi';
-  else if (!Number.isInteger(amount) || amount <= 0 || amount > MAX_AMOUNT) errors.amount = 'Nominal harus berupa angka lebih dari 0 dan tidak melebihi 999.999.999.999';
+  const amount = rupiahInputValue(form.querySelector('#tx-amount'));
+  if (isNaN(amount) || amount <= 0) errors.amount = 'Nominal wajib diisi';
+  else if (!Number.isInteger(amount) || amount > MAX_AMOUNT) errors.amount = 'Nominal harus berupa angka lebih dari 0 dan tidak melebihi 999.999.999.999';
   if (!form.querySelector('#tx-category').value) errors.category_id = 'Kategori wajib dipilih';
   if (!form.querySelector('#tx-date').value) errors.date = 'Tanggal wajib diisi';
   if (form.querySelector('#tx-note').value.length > 255) errors.note = 'Catatan maksimal 255 karakter';

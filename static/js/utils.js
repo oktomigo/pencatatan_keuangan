@@ -112,6 +112,87 @@ export function generateDeviceId() {
 }
 
 /**
+ * rupiahInput(inputEl)
+ * Ubah input[type=number] menjadi input teks dengan format Rupiah real-time.
+ *
+ * Cara kerja:
+ *  - Ganti type menjadi "text" agar bisa menampilkan karakter titik & prefix "Rp".
+ *  - Setiap keystroke: strip non-digit, format pakai toLocaleString, tampilkan.
+ *  - Simpan nilai numerik asli di inputEl._rawValue (digunakan saat submit).
+ *  - Fungsi getValue(inputEl) untuk mengambil nilai numerik kembali.
+ *
+ * Cara pakai:
+ *   rupiahInput(document.getElementById('tx-amount'));
+ *   // Saat submit:
+ *   const amount = rupiahInputValue(document.getElementById('tx-amount'));
+ */
+export function rupiahInput(inputEl) {
+  if (!inputEl) return;
+
+  // Simpan nilai awal jika ada (mode edit)
+  const initialRaw = inputEl.value ? String(inputEl.value).replace(/\D/g, '') : '';
+
+  // Ubah ke type text supaya bisa format bebas
+  inputEl.type = 'text';
+  inputEl.inputMode = 'numeric';
+  inputEl.autocomplete = 'off';
+
+  // Fungsi format internal: digit string → "Rp 1.234.567"
+  function format(raw) {
+    if (!raw) return '';
+    const num = parseInt(raw, 10);
+    if (isNaN(num)) return '';
+    return 'Rp\u00A0' + num.toLocaleString('id-ID');
+  }
+
+  // Set tampilan awal jika ada nilai
+  if (initialRaw) {
+    inputEl._rawValue = initialRaw;
+    inputEl.value = format(initialRaw);
+  } else {
+    inputEl._rawValue = '';
+  }
+
+  inputEl.addEventListener('input', (event) => {
+    const raw = inputEl.value.replace(/\D/g, '');
+    inputEl._rawValue = raw;
+    const formatted = format(raw);
+    inputEl.value = formatted;
+
+    // Pindahkan kursor ke akhir agar tidak loncat
+    const len = formatted.length;
+    try { inputEl.setSelectionRange(len, len); } catch (_) {}
+  });
+
+  // Saat focus: tampilkan angka bersih agar mudah diedit ulang dari awal
+  inputEl.addEventListener('focus', () => {
+    const raw = inputEl._rawValue || '';
+    if (raw) {
+      inputEl.value = format(raw);
+    } else {
+      inputEl.value = '';
+    }
+  });
+
+  // Saat blur: format ulang dengan prefix Rp
+  inputEl.addEventListener('blur', () => {
+    const raw = inputEl._rawValue || '';
+    inputEl.value = format(raw);
+  });
+}
+
+/**
+ * rupiahInputValue(inputEl)
+ * Ambil nilai numerik dari input yang sudah di-attach rupiahInput().
+ * Kembalikan Number, atau NaN jika kosong/invalid.
+ */
+export function rupiahInputValue(inputEl) {
+  if (!inputEl) return NaN;
+  const raw = inputEl._rawValue ?? inputEl.value.replace(/\D/g, '');
+  return raw ? Number(raw) : NaN;
+}
+
+/**
  * today()
  * Kembalikan tanggal hari ini sebagai string YYYY-MM-DD (local time).
  */
