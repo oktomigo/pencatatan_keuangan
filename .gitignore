@@ -12,6 +12,7 @@ venv/
 
 # IDE & tools
 .kiro
+.kiro/specs/pencatatan-keuangan
 .vscode
 .cline/skills/
 
