@@ -2,7 +2,7 @@
 {% block title %}Tagihan Berulang — CatatUang{% endblock %}
 
 {% block content %}
-<!-- Konten tagihan berulang diisi oleh recurring_bills.js -->
+<section id="bills-page" aria-labelledby="bills-title" style="max-width:820px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)"><header style="display:flex;justify-content:space-between;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)"><div><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Pengingat rutin</p><h1 id="bills-title" style="font-size:var(--text-heading-1);font-weight:700">Tagihan Berulang</h1></div><button id="btn-add-bill" type="button">+ Tambah</button></header><div id="bills-error" class="hidden" role="alert"></div><div id="bills-empty" class="hidden" role="status">Belum ada tagihan berulang.</div><div id="bills-list" aria-live="polite"></div></section>
 {% endblock %}
 
 {% block scripts %}

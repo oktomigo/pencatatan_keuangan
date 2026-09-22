@@ -18,44 +18,18 @@ let emptyState;
 let errorState;
 
 export async function init() {
-  createPageShell();
-  bindPageEvents();
-  renderLoading();
-  await loadCategories();
-}
-
-function createPageShell() {
   pageRoot = document.getElementById('categories-page');
-  if (!pageRoot) {
-    pageRoot = document.createElement('section');
-    pageRoot.id = 'categories-page';
-    pageRoot.setAttribute('aria-labelledby', 'categories-title');
-    pageRoot.style.cssText = 'max-width:720px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20);';
-    pageRoot.innerHTML = `
-    <header style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-5)">
-      <div>
-        <p style="color:var(--color-text-secondary);font-size:var(--text-body-md);margin-bottom:var(--space-1)">Pengaturan pencatatan</p>
-        <h1 id="categories-title" style="font-size:var(--text-heading-1);font-weight:700">Kategori</h1>
-      </div>
-      <button id="btn-add-category" type="button" style="min-height:44px;padding:0 var(--space-4);border-radius:var(--rounded-md);background:var(--color-primary-500);color:var(--color-text-inverse);font-weight:600">+ Tambah</button>
-    </header>
-    <div id="category-tabs" role="tablist" aria-label="Jenis kategori" style="display:flex;gap:var(--space-2);margin-bottom:var(--space-4)">
-      <button id="tab-expense" type="button" role="tab" aria-selected="true" data-type="expense" style="flex:1;min-height:44px;border-radius:var(--rounded-md);font-weight:600">Pengeluaran</button>
-      <button id="tab-income" type="button" role="tab" aria-selected="false" data-type="income" style="flex:1;min-height:44px;border-radius:var(--rounded-md);font-weight:600">Pemasukan</button>
-    </div>
-    <div id="categories-error" class="hidden" role="alert" style="padding:var(--space-4);margin-bottom:var(--space-4);border:1px solid var(--color-danger-500);border-radius:var(--rounded-md);background:var(--color-danger-50);color:var(--color-danger-700)"></div>
-    <div id="categories-empty" class="hidden" role="status" style="padding:var(--space-6);margin-bottom:var(--space-4);text-align:center;border:1px dashed var(--color-border-medium);border-radius:var(--rounded-lg);color:var(--color-text-secondary)">Belum ada kategori custom.</div>
-    <div id="categories-list" aria-live="polite"></div>
-    `;
-    document.getElementById('page-content')?.appendChild(pageRoot);
-  }
-
+  if (!pageRoot) return;
   categoryList = pageRoot.querySelector('#categories-list');
   emptyState = pageRoot.querySelector('#categories-empty');
   errorState = pageRoot.querySelector('#categories-error');
   styleTab(pageRoot.querySelector('#tab-expense'), true);
   styleTab(pageRoot.querySelector('#tab-income'), false);
+  bindPageEvents();
+  renderLoading();
+  await loadCategories();
 }
+
 
 function bindPageEvents() {
   pageRoot.querySelector('#btn-add-category')?.addEventListener('click', () => openCategoryForm());
@@ -140,9 +114,10 @@ function createCategoryItem(category) {
   item.style.cssText = 'display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);margin-bottom:var(--space-3);background:var(--color-surface-card);border:1px solid var(--color-border-light);border-radius:var(--rounded-lg);box-shadow:var(--shadow-sm);';
 
   const icon = document.createElement('span');
-  icon.textContent = category.icon || '📦';
   icon.setAttribute('aria-hidden', 'true');
-  icon.style.cssText = `display:grid;place-items:center;width:40px;height:40px;border-radius:var(--rounded-full);background:${category.color || 'var(--color-primary-50)'};font-size:1.25rem;`;
+  icon.style.cssText = `display:grid;place-items:center;width:40px;height:40px;border-radius:var(--rounded-full);background:${category.color || 'var(--color-primary-50)'};`;
+  icon.innerHTML = `<i data-lucide="${escapeHtml(category.icon || 'tag')}" width="20" height="20"></i>`;
+  renderIcons(icon);
 
   const content = document.createElement('div');
   content.style.cssText = 'min-width:0;flex:1;';
@@ -374,4 +349,8 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function renderIcons(container = document) {
+  if (globalThis.lucide?.createIcons) globalThis.lucide.createIcons({ root: container });
 }

@@ -2,7 +2,7 @@
 {% block title %}Kategori — CatatUang{% endblock %}
 
 {% block content %}
-<!-- Konten kategori diisi oleh categories.js -->
+<section id="categories-page" aria-labelledby="categories-title" style="max-width:720px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)"><header style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-5)"><div><p style="color:var(--color-text-secondary);font-size:var(--text-body-md);margin-bottom:var(--space-1)">Pengaturan pencatatan</p><h1 id="categories-title" style="font-size:var(--text-heading-1);font-weight:700">Kategori</h1></div><button id="btn-add-category" type="button">+ Tambah</button></header><div id="category-tabs" role="tablist" aria-label="Jenis kategori"><button id="tab-expense" type="button" role="tab" aria-selected="true" data-type="expense">Pengeluaran</button><button id="tab-income" type="button" role="tab" aria-selected="false" data-type="income">Pemasukan</button></div><div id="categories-error" class="hidden" role="alert"></div><div id="categories-empty" class="hidden" role="status">Belum ada kategori custom.</div><div id="categories-list" aria-live="polite"></div></section>
 {% endblock %}
 
 {% block scripts %}

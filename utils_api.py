@@ -8,8 +8,10 @@ def ok(data, status=200, meta=None):
     return jsonify(payload), status
 
 
-def fail(code, message, fields=None, status=400):
+def fail(code, message, fields=None, data=None, status=400):
     error = {'code': code, 'message': message}
     if fields is not None:
         error['fields'] = fields
+    if data is not None:
+        error['data'] = data
     return jsonify({'success': False, 'error': error}), status

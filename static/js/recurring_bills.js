@@ -11,21 +11,11 @@ let bills = [];
 let categories = [];
 
 export async function init() {
-  createShell();
+  root = document.getElementById('bills-page');
+  if (!root) return;
   bindEvents();
   renderLoading();
   await loadBills();
-}
-
-function createShell() {
-  root = document.getElementById('bills-page');
-  if (!root) {
-    root = document.createElement('section');
-    root.id = 'bills-page';
-    root.style.cssText = 'max-width:820px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20);';
-    root.innerHTML = `<header style="display:flex;justify-content:space-between;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)"><div><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Pengingat rutin</p><h1 style="font-size:var(--text-heading-1);font-weight:700">Tagihan Berulang</h1></div><button id="btn-add-bill" type="button" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md);background:var(--color-primary-500);color:#fff;font-weight:600">+ Tambah</button></header><div id="bills-error" class="hidden" role="alert" style="padding:var(--space-4);margin-bottom:var(--space-4);border:1px solid var(--color-danger-500);border-radius:var(--rounded-md);background:var(--color-danger-50);color:var(--color-danger-700)"></div><div id="bills-empty" class="hidden" role="status" style="padding:var(--space-8);text-align:center;border:1px dashed var(--color-border-medium);border-radius:var(--rounded-lg);color:var(--color-text-secondary)">Belum ada tagihan berulang.</div><div id="bills-list" aria-live="polite"></div>`;
-    document.getElementById('page-content')?.appendChild(root);
-  }
 }
 
 function bindEvents() { root.querySelector('#btn-add-bill')?.addEventListener('click', () => openBillForm()); }

@@ -6,7 +6,7 @@ import { showToast } from './toast.js';
 let state;
 
 export function init() {
-  createShell();
+  if (!document.getElementById('export-page')) return;
   state = { format: 'excel', period: 'this-month', start: '', end: '' };
   bindFormat();
   bindPeriods();
@@ -14,15 +14,6 @@ export function init() {
   document.getElementById('btn-export')?.addEventListener('click', exportData);
   updateControls();
   updatePreview();
-}
-
-function createShell() {
-  if (document.getElementById('export-page')) return;
-  const root = document.createElement('section');
-  root.id = 'export-page';
-  root.style.cssText = 'max-width:720px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20);';
-  root.innerHTML = `<header style="margin-bottom:var(--space-5)"><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Simpan arsip keuangan</p><h1 style="font-size:var(--text-heading-1);font-weight:700">Ekspor Data</h1></header><div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-5)"><button id="fmt-excel" type="button" style="flex:1;min-height:44px;border-radius:var(--rounded-md)">Excel (.xlsx)</button><button id="fmt-pdf" type="button" style="flex:1;min-height:44px;border-radius:var(--rounded-md)">PDF</button></div><h2 style="font-size:var(--text-heading-2);margin-bottom:var(--space-3)">Periode</h2><div id="export-periods" style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3)"><button id="period-this-month" type="button" data-period="this-month" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Bulan ini</button><button id="period-3-months" type="button" data-period="3-months" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">3 bulan</button><button id="period-6-months" type="button" data-period="6-months" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">6 bulan</button><button id="period-this-year" type="button" data-period="this-year" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Tahun ini</button><button id="period-custom" type="button" data-period="custom" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Kustom</button></div><div id="export-custom-range" class="hidden" style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-4)"><input id="export-start" type="date" aria-label="Tanggal mulai" style="min-height:44px;padding:0 var(--space-2);border:1px solid var(--color-border-light);border-radius:var(--rounded-md)"><input id="export-end" type="date" aria-label="Tanggal akhir" style="min-height:44px;padding:0 var(--space-2);border:1px solid var(--color-border-light);border-radius:var(--rounded-md)"><p id="export-range-error" class="hidden" role="alert" style="width:100%;color:var(--color-danger-700)">Tanggal mulai tidak boleh setelah tanggal akhir</p></div><p id="export-preview" style="margin:var(--space-4) 0;color:var(--color-text-secondary)"></p><div id="export-status" role="status" aria-live="polite"></div><button id="btn-export" type="button" style="width:100%;min-height:48px;border-radius:var(--rounded-md);background:var(--color-primary-500);color:#fff;font-weight:600">Ekspor sekarang</button>`;
-  document.getElementById('page-content')?.appendChild(root);
 }
 
 function bindFormat() {

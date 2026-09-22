@@ -28,48 +28,16 @@ let searchTimer = null;
 let categoryCache = new Map();
 
 export async function init() {
-  createPageShell();
-  bindPageEvents();
-  initFABAndNewParam();
-  await loadTransactions(true);
-}
-
-function createPageShell() {
   pageRoot = document.getElementById('transactions-page');
-  if (!pageRoot) {
-    pageRoot = document.createElement('section');
-    pageRoot.id = 'transactions-page';
-    pageRoot.setAttribute('aria-labelledby', 'transactions-title');
-    pageRoot.style.cssText = 'max-width:820px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20);';
-    pageRoot.innerHTML = `
-      <header style="margin-bottom:var(--space-5)">
-        <p style="color:var(--color-text-secondary);font-size:var(--text-body-md);margin-bottom:var(--space-1)">Catatan harian</p>
-        <h1 id="transactions-title" style="font-size:var(--text-heading-1);font-weight:700">Transaksi</h1>
-      </header>
-      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3)">
-        <input id="search-input" type="search" placeholder="Cari catatan atau kategori" aria-label="Cari transaksi" style="flex:1;min-width:220px;min-height:44px;padding:0 var(--space-3);border:1px solid var(--color-border-light);border-radius:var(--rounded-md);background:var(--color-surface-card)" />
-        <select id="category-filter" aria-label="Filter kategori" style="min-height:44px;padding:0 var(--space-3);border:1px solid var(--color-border-light);border-radius:var(--rounded-md);background:var(--color-surface-card)"><option value="">Semua kategori</option></select>
-      </div>
-      <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3);flex-wrap:wrap">
-        <button id="filter-all" type="button" data-filter="all" class="active" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Semua</button>
-        <button id="filter-income" type="button" data-filter="income" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Pemasukan</button>
-        <button id="filter-expense" type="button" data-filter="expense" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Pengeluaran</button>
-        <input id="period-month" type="number" min="1" max="12" placeholder="Bulan" aria-label="Bulan" style="width:92px;min-height:44px;padding:0 var(--space-2);border:1px solid var(--color-border-light);border-radius:var(--rounded-md)" />
-        <input id="period-year" type="number" min="2000" max="9999" placeholder="Tahun" aria-label="Tahun" style="width:110px;min-height:44px;padding:0 var(--space-2);border:1px solid var(--color-border-light);border-radius:var(--rounded-md)" />
-      </div>
-      <div id="transactions-error" class="hidden" role="alert" style="padding:var(--space-4);margin-bottom:var(--space-4);border:1px solid var(--color-danger-500);border-radius:var(--rounded-md);background:var(--color-danger-50);color:var(--color-danger-700)"></div>
-      <div id="transactions-empty" class="hidden" role="status" style="padding:var(--space-8);text-align:center;border:1px dashed var(--color-border-medium);border-radius:var(--rounded-lg);color:var(--color-text-secondary)">Belum ada transaksi pada periode ini.</div>
-      <div id="transaction-list" aria-live="polite"></div>
-      <button id="transactions-load-more" type="button" class="hidden" style="width:100%;min-height:44px;margin-top:var(--space-3);border:1px solid var(--color-border-medium);border-radius:var(--rounded-md);color:var(--color-primary-700)">Muat lebih banyak</button>
-    `;
-    document.getElementById('page-content')?.appendChild(pageRoot);
-  }
-
+  if (!pageRoot) return;
   transactionList = pageRoot.querySelector('#transaction-list');
   emptyState = pageRoot.querySelector('#transactions-empty');
   errorState = pageRoot.querySelector('#transactions-error');
   loadMoreButton = pageRoot.querySelector('#transactions-load-more');
   setActiveFilter(filters.type);
+  bindPageEvents();
+  initFABAndNewParam();
+  await loadTransactions(true);
 }
 
 function bindPageEvents() {
@@ -206,8 +174,8 @@ function createTransactionItem(transaction) {
 
   const icon = document.createElement('span');
   icon.className = 'tx-icon';
-  icon.textContent = transaction.category_icon || '📦';
   icon.style.cssText = `display:grid;place-items:center;width:40px;height:40px;flex-shrink:0;border-radius:var(--rounded-full);background:${transaction.category_color || 'var(--color-surface-raised)'};`;
+  icon.innerHTML = `<i data-lucide="${escapeHtml(transaction.category_icon || 'tag')}" width="20" height="20"></i>`;
   const body = document.createElement('div');
   body.style.cssText = 'min-width:0;flex:1;';
   const category = document.createElement('strong');
@@ -223,6 +191,7 @@ function createTransactionItem(transaction) {
   amount.textContent = `${transaction.type === 'income' ? '+' : '−'}${formatRupiah(transaction.amount)}`;
   amount.style.color = transaction.type === 'income' ? 'var(--color-text-income)' : 'var(--color-text-expense)';
   item.append(icon, body, amount);
+  renderIcons(item);
   item.addEventListener('click', () => openDetailSheet(transaction));
   item.addEventListener('keydown', event => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -258,7 +227,7 @@ function openDetailSheet(transaction) {
   const detailHTML = `
     <div style="display:flex;flex-direction:column;gap:var(--space-4)">
       <div style="display:flex;align-items:center;gap:var(--space-3)">
-        <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:var(--rounded-full);background:${transaction.category_color || 'var(--color-surface-raised)'}">${escapeHtml(transaction.category_icon || '📦')}</span>
+        <span style="display:grid;place-items:center;width:44px;height:44px;border-radius:var(--rounded-full);background:${transaction.category_color || 'var(--color-surface-raised)'}"><i data-lucide="${escapeHtml(transaction.category_icon || 'tag')}" width="22" height="22"></i></span>
         <div><strong>${escapeHtml(categoryName)}</strong><p style="color:var(--color-text-secondary);font-size:var(--text-caption)">${transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</p></div>
         <strong class="tabular-nums" style="margin-left:auto;color:${transaction.type === 'income' ? 'var(--color-text-income)' : 'var(--color-text-expense)'}">${transaction.type === 'income' ? '+' : '−'}${formatRupiah(transaction.amount)}</strong>
       </div>
@@ -272,6 +241,7 @@ function openDetailSheet(transaction) {
       </div>
     </div>`;
   (isMobile ? openBottomSheet : openModal)({ title: 'Detail Transaksi', contentHTML: detailHTML });
+  setTimeout(() => renderIcons(), 0);
   setTimeout(() => {
     document.getElementById('detail-edit-btn')?.addEventListener('click', () => {
       closeTransactionOverlay(isMobile);
@@ -489,4 +459,8 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function renderIcons(container = document) {
+  if (globalThis.lucide?.createIcons) globalThis.lucide.createIcons({ root: container });
 }

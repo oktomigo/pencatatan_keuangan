@@ -2,7 +2,7 @@
 {% block title %}Tabungan — CatatUang{% endblock %}
 
 {% block content %}
-<!-- Konten tabungan diisi oleh savings.js -->
+<section id="savings-page" aria-labelledby="savings-title" style="max-width:900px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)"><header style="display:flex;justify-content:space-between;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)"><div><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Rencana masa depan</p><h1 id="savings-title" style="font-size:var(--text-heading-1);font-weight:700">Target Tabungan</h1><p id="savings-total">Total terkumpul: Rp 0</p></div><button id="btn-new-goal" type="button">+ Tambah target</button></header><div id="savings-error" class="hidden" role="alert"></div><div id="savings-empty" class="hidden" role="status">Belum ada target. Mulai rencanakan tabungan.</div><div id="savings-list" aria-live="polite"></div></section>
 {% endblock %}
 
 {% block scripts %}

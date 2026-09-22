@@ -11,26 +11,11 @@ let budgets = [];
 let categories = [];
 
 export async function init() {
-  createShell();
+  root = document.getElementById('budgets-page');
+  if (!root) return;
   bindEvents();
   renderLoading();
   await loadData();
-}
-
-function createShell() {
-  root = document.getElementById('budgets-page');
-  if (!root) {
-    root = document.createElement('section');
-    root.id = 'budgets-page';
-    root.style.cssText = 'max-width:820px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20);';
-    root.innerHTML = `
-      <header style="margin-bottom:var(--space-5)"><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Rencana pengeluaran</p><h1 style="font-size:var(--text-heading-1);font-weight:700">Anggaran</h1></header>
-      <div id="budgets-error" class="hidden" role="alert" style="padding:var(--space-4);margin-bottom:var(--space-4);border:1px solid var(--color-danger-500);border-radius:var(--rounded-md);background:var(--color-danger-50);color:var(--color-danger-700)"></div>
-      <div id="budgets-empty" class="hidden" role="status" style="padding:var(--space-8);text-align:center;border:1px dashed var(--color-border-medium);border-radius:var(--rounded-lg);color:var(--color-text-secondary)">Belum ada anggaran. Pilih kategori untuk mulai mengatur batas pengeluaran.</div>
-      <div id="budgets-list" aria-live="polite"></div>
-      <div id="unbudgeted-section" class="hidden" style="margin-top:var(--space-6)"><h2 style="font-size:var(--text-heading-2);margin-bottom:var(--space-3)">Belum dianggarkan</h2><div id="unbudgeted-list"></div></div>`;
-    document.getElementById('page-content')?.appendChild(root);
-  }
 }
 
 function bindEvents() {

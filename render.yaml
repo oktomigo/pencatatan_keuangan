@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: catatuang
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: MONGO_DB
+        value: pencatatan_keuangan
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://catatuang.onrender.com
+      - key: MAX_AMOUNT
+        value: "999999999999"
