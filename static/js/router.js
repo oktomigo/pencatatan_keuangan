@@ -1,9 +1,9 @@
-// router.js — highlight nav aktif, offline detection, FAB handler
+// router.js — highlight nav aktif, offline detection, FAB handler, more drawer
 
 /**
  * highlightNav()
  * Baca pathname saat ini, tandai nav item yang cocok sebagai aktif.
- * Berlaku untuk bottom nav dan sidebar (keduanya pakai data-nav-path).
+ * Berlaku untuk bottom nav, sidebar, dan more-drawer (keduanya pakai data-nav-path).
  */
 function highlightNav() {
   const path = window.location.pathname;
@@ -19,6 +19,19 @@ function highlightNav() {
       el.removeAttribute('aria-current');
     }
   });
+
+  // Tandai tombol "Lainnya" aktif jika halaman aktif ada di dalam drawer
+  const drawerPaths = ['/budgets', '/recurring-bills', '/categories', '/export', '/settings'];
+  const moreBtn = document.getElementById('btn-more-nav');
+  if (moreBtn) {
+    const isMoreActive = drawerPaths.includes(path);
+    moreBtn.classList.toggle('active', isMoreActive);
+    if (isMoreActive) {
+      moreBtn.setAttribute('aria-current', 'page');
+    } else {
+      moreBtn.removeAttribute('aria-current');
+    }
+  }
 }
 
 /**
@@ -56,11 +69,73 @@ function initFAB() {
   });
 }
 
+/**
+ * initMoreDrawer()
+ * Tombol "Lainnya" di bottom nav membuka bottom sheet drawer berisi
+ * semua halaman yang tidak muat di nav bar.
+ */
+function initMoreDrawer() {
+  const btn     = document.getElementById('btn-more-nav');
+  const drawer  = document.getElementById('more-drawer');
+  const overlay = document.getElementById('more-drawer-overlay');
+  const close   = document.getElementById('more-drawer-close');
+
+  if (!btn || !drawer || !overlay) return;
+
+  let isOpen = false;
+
+  function openDrawer() {
+    isOpen = true;
+    drawer.classList.add('is-open');
+    overlay.classList.add('is-open');
+    overlay.removeAttribute('aria-hidden');
+    btn.setAttribute('aria-expanded', 'true');
+    // Re-render lucide icons di dalam drawer
+    if (globalThis.lucide?.createIcons) {
+      globalThis.lucide.createIcons({ nodes: drawer.querySelectorAll('[data-lucide]') });
+    }
+    // Fokus ke close button untuk aksesibilitas
+    setTimeout(() => close?.focus(), 50);
+  }
+
+  function closeDrawer() {
+    isOpen = false;
+    drawer.classList.remove('is-open');
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.focus(); // kembalikan fokus ke trigger
+  }
+
+  btn.addEventListener('click', () => {
+    if (isOpen) closeDrawer(); else openDrawer();
+  });
+
+  overlay.addEventListener('click', closeDrawer);
+  close?.addEventListener('click', closeDrawer);
+
+  // Tutup dengan Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen) closeDrawer();
+  });
+
+  // Touch drag-to-dismiss
+  let startY = 0;
+  drawer.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  drawer.addEventListener('touchend', (e) => {
+    const delta = e.changedTouches[0].clientY - startY;
+    if (delta > 80) closeDrawer();
+  }, { passive: true });
+}
+
 // Jalankan semua saat DOM siap
 document.addEventListener('DOMContentLoaded', () => {
   highlightNav();
   initOfflineDetection();
   initFAB();
+  initMoreDrawer();
 });
 
 // Export untuk dipakai halaman lain jika perlu navigate programatically

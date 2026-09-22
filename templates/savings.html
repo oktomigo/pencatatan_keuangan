@@ -1,8 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Tabungan — CatatUang{% endblock %}
+{% block title %}Target Tabungan — CatatUang{% endblock %}
 
 {% block content %}
-<section id="savings-page" aria-labelledby="savings-title" style="max-width:900px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)"><header style="display:flex;justify-content:space-between;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)"><div><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Rencana masa depan</p><h1 id="savings-title" style="font-size:var(--text-heading-1);font-weight:700">Target Tabungan</h1><p id="savings-total">Total terkumpul: Rp 0</p></div><button id="btn-new-goal" type="button">+ Tambah target</button></header><div id="savings-error" class="hidden" role="alert"></div><div id="savings-empty" class="hidden" role="status">Belum ada target. Mulai rencanakan tabungan.</div><div id="savings-list" aria-live="polite"></div></section>
+<section id="savings-page" aria-labelledby="savings-title" class="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-6">
+
+  <!-- Header & Total Card -->
+  <div class="card-hero space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-teal-200 mb-1">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          Rencana Masa Depan
+        </span>
+        <h1 id="savings-title" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          Target Tabungan
+        </h1>
+        <p id="savings-total" class="tabular-nums text-lg sm:text-xl font-bold text-teal-100 mt-1">
+          Total terkumpul: Rp 0
+        </p>
+      </div>
+
+      <button id="btn-new-goal"
+              type="button"
+              class="btn bg-white text-teal-800 font-bold hover:bg-teal-50 shadow-md shadow-black/10 self-start sm:self-center">
+        <i data-lucide="plus-circle" class="w-4 h-4 text-teal-600"></i>
+        <span>Tambah Target</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div id="savings-error" class="hidden" role="alert" style="padding:var(--space-4);border-radius:var(--rounded-lg);background:var(--color-danger-50);border:1px solid var(--color-danger-300);color:var(--color-danger-700)"></div>
+
+  <!-- Empty State -->
+  <div id="savings-empty" class="empty-box hidden" role="status">
+    <div class="empty-icon-wrapper">
+      <i data-lucide="piggy-bank" class="w-6 h-6"></i>
+    </div>
+    <h3 class="empty-title">Belum Ada Target Tabungan</h3>
+    <p class="empty-desc">Buat target impian Anda (misalnya: Dana Darurat, Liburan, Laptop) dan pantau perkembangannya.</p>
+  </div>
+
+  <!-- Goals List (Grid on sm+) -->
+  <div id="savings-list" aria-live="polite" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+
+</section>
 {% endblock %}
 
 {% block scripts %}

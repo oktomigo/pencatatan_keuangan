@@ -1,8 +1,62 @@
 {% extends "base.html" %}
-{% block title %}Anggaran — CatatUang{% endblock %}
+{% block title %}Batas Anggaran — CatatUang{% endblock %}
 
 {% block content %}
-<section id="budgets-page" aria-labelledby="budgets-title" style="max-width:820px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)"><header style="margin-bottom:var(--space-5)"><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Rencana pengeluaran</p><h1 id="budgets-title" style="font-size:var(--text-heading-1);font-weight:700">Anggaran</h1></header><div id="budgets-error" class="hidden" role="alert"></div><div id="budgets-empty" class="hidden" role="status">Belum ada anggaran. Pilih kategori untuk mulai mengatur batas pengeluaran.</div><div id="budgets-list" aria-live="polite"></div><div id="unbudgeted-section" class="hidden" style="margin-top:var(--space-6)"><h2 style="font-size:var(--text-heading-2);margin-bottom:var(--space-3)">Belum dianggarkan</h2><div id="unbudgeted-list"></div></div></section>
+<section id="budgets-page" aria-labelledby="budgets-title" class="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-6">
+
+  <!-- Header -->
+  <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-stone-200/60">
+    <div>
+      <p class="text-xs sm:text-sm font-medium text-stone-500 mb-0.5">Kontrol & Batas Pengeluaran</p>
+      <h1 id="budgets-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+        Anggaran Kategori
+      </h1>
+    </div>
+    <div class="flex items-center gap-2 text-xs font-semibold">
+      <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-200">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        &lt;80% Aman
+      </span>
+      <span class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full border border-amber-200">
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        80-99% Waspada
+      </span>
+      <span class="inline-flex items-center gap-1.5 bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full border border-rose-200">
+        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+        ≥100% Lewat
+      </span>
+    </div>
+  </header>
+
+  <!-- Error Alert -->
+  <div id="budgets-error" class="hidden" role="alert" style="padding:var(--space-4);border-radius:var(--rounded-lg);background:var(--color-danger-50);border:1px solid var(--color-danger-300);color:var(--color-danger-700)"></div>
+
+  <!-- Empty State -->
+  <div id="budgets-empty" class="empty-box hidden" role="status">
+    <div class="empty-icon-wrapper">
+      <i data-lucide="target" class="w-6 h-6"></i>
+    </div>
+    <h3 class="empty-title">Belum Ada Anggaran</h3>
+    <p class="empty-desc">Tetapkan batas pengeluaran per kategori agar keuangan bulanan Anda tetap terkontrol.</p>
+  </div>
+
+  <!-- Active Budgets List -->
+  <div id="budgets-list" aria-live="polite" class="space-y-4"></div>
+
+  <!-- Unbudgeted Section -->
+  <section id="unbudgeted-section" class="card-fintech hidden space-y-4">
+    <div class="flex items-center justify-between pb-2 border-b border-stone-100">
+      <div>
+        <h2 class="text-base sm:text-lg font-bold text-stone-900">
+          Kategori Belum Dianggarkan
+        </h2>
+        <p class="text-xs text-stone-500">Pilih kategori di bawah ini untuk mulai memasang batas anggaran bulanan.</p>
+      </div>
+    </div>
+    <div id="unbudgeted-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+  </section>
+
+</section>
 {% endblock %}
 
 {% block scripts %}

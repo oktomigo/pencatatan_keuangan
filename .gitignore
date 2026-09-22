@@ -1,6 +1,26 @@
+# Secrets — jangan pernah di-commit
 .env
+
+# Python cache
 __pycache__/
 *.pyc
+*.pyo
+
+# Virtual environment
 venv/
+.venv/
+
+# IDE & tools
 .kiro
 .vscode
+.cline/skills/
+
+# Pytest cache
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel build output
+.vercel/

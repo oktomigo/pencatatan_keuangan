@@ -6,7 +6,6 @@ export function init() {
     window.location.href = '/dashboard';
     return;
   }
-
   // ── State ──────────────────────────────────────────────────
   let currentSlide = 0;
   const totalSlides = 3;
@@ -187,18 +186,53 @@ export function init() {
 
   // ── Events ─────────────────────────────────────────────────
   document.getElementById('btn-skip').addEventListener('click', () => {
-    window.location.href = '/dashboard';
+    finishOnboarding();
   });
 
   document.getElementById('btn-next').addEventListener('click', () => {
     if (currentSlide < totalSlides - 1) {
       showSlide(currentSlide + 1);
     } else {
-      // Selesai onboarding
+      finishOnboarding();
+    }
+  });
+
+  /**
+   * finishOnboarding()
+   * Panggil /api/init untuk daftarkan device, simpan device_id,
+   * set flag onboarded, lalu redirect ke dashboard.
+   */
+  async function finishOnboarding() {
+    const btnNext = document.getElementById('btn-next');
+    const btnSkip = document.getElementById('btn-skip');
+    if (btnNext) { btnNext.disabled = true; btnNext.textContent = 'Memuat...'; }
+    if (btnSkip) btnSkip.disabled = true;
+
+    try {
+      // Cek apakah sudah ada device_id tersimpan
+      const existingId = localStorage.getItem('device_id');
+      const body = existingId ? JSON.stringify({ device_id: existingId }) : undefined;
+
+      const response = await fetch('/api/init', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body,
+      });
+
+      if (response.ok) {
+        const payload = await response.json();
+        const deviceId = payload?.data?.device_id;
+        if (deviceId) {
+          localStorage.setItem('device_id', deviceId);
+        }
+      }
+    } catch (_) {
+      // Gagal init tidak memblokir user — akan dicoba ulang saat buka dashboard
+    } finally {
       localStorage.setItem('onboarded', 'true');
       window.location.href = '/dashboard';
     }
-  });
+  }
 
   // ── Swipe gesture (mobile) ─────────────────────────────────
   let touchStartX = 0;

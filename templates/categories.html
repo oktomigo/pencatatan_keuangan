@@ -1,8 +1,69 @@
 {% extends "base.html" %}
-{% block title %}Kategori — CatatUang{% endblock %}
+{% block title %}Kelola Kategori — CatatUang{% endblock %}
 
 {% block content %}
-<section id="categories-page" aria-labelledby="categories-title" style="max-width:720px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)"><header style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-5)"><div><p style="color:var(--color-text-secondary);font-size:var(--text-body-md);margin-bottom:var(--space-1)">Pengaturan pencatatan</p><h1 id="categories-title" style="font-size:var(--text-heading-1);font-weight:700">Kategori</h1></div><button id="btn-add-category" type="button">+ Tambah</button></header><div id="category-tabs" role="tablist" aria-label="Jenis kategori"><button id="tab-expense" type="button" role="tab" aria-selected="true" data-type="expense">Pengeluaran</button><button id="tab-income" type="button" role="tab" aria-selected="false" data-type="income">Pemasukan</button></div><div id="categories-error" class="hidden" role="alert"></div><div id="categories-empty" class="hidden" role="status">Belum ada kategori custom.</div><div id="categories-list" aria-live="polite"></div></section>
+<section id="categories-page" aria-labelledby="categories-title" class="max-w-3xl mx-auto px-4 py-6 md:py-8 space-y-6">
+
+  <!-- Header -->
+  <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-stone-200/60">
+    <div>
+      <p class="text-xs sm:text-sm font-medium text-stone-500 mb-0.5">Klasifikasi Pencatatan</p>
+      <h1 id="categories-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+        Kelola Kategori
+      </h1>
+    </div>
+    <div>
+      <button id="btn-add-category"
+              type="button"
+              class="btn btn-primary text-sm shadow-md">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <span>Tambah Kategori</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Segmented Type Tabs -->
+  <div class="card-fintech p-3">
+    <div id="category-tabs" role="tablist" class="segmented-nav" aria-label="Jenis kategori transaksi">
+      <button id="tab-expense"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              data-type="expense"
+              class="segmented-btn active">
+        <i data-lucide="arrow-up-right" class="w-4 h-4 text-rose-500 mr-1.5"></i>
+        Pengeluaran
+      </button>
+      <button id="tab-income"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              data-type="income"
+              class="segmented-btn">
+        <i data-lucide="arrow-down-left" class="w-4 h-4 text-emerald-500 mr-1.5"></i>
+        Pemasukan
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div id="categories-error" class="hidden" role="alert" style="padding:var(--space-4);border-radius:var(--rounded-lg);background:var(--color-danger-50);border:1px solid var(--color-danger-300);color:var(--color-danger-700)"></div>
+
+  <!-- Empty State -->
+  <div id="categories-empty" class="empty-box hidden" role="status">
+    <div class="empty-icon-wrapper">
+      <i data-lucide="tags" class="w-6 h-6"></i>
+    </div>
+    <h3 class="empty-title">Belum Ada Kategori Kustom</h3>
+    <p class="empty-desc">Buat kategori baru sesuai kebutuhan gaya hidup Anda.</p>
+  </div>
+
+  <!-- Categories List Container -->
+  <div class="card-fintech p-0 overflow-hidden">
+    <div id="categories-list" aria-live="polite" class="divide-y divide-stone-100"></div>
+  </div>
+
+</section>
 {% endblock %}
 
 {% block scripts %}

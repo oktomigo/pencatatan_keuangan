@@ -1,14 +1,36 @@
-from functools import lru_cache
+"""
+db.py — MongoDB client & index initialization.
+
+Di environment serverless (Vercel), setiap invocation bisa berjalan di
+process yang berbeda. Kita tetap pakai module-level singleton karena Vercel
+menggunakan "Fluid compute" yang me-reuse warm instances — connection reuse
+tetap terjadi selama instance masih warm.
+
+maxPoolSize=10 (bukan 50) karena serverless bisa spawn banyak instance
+serentak; pool kecil per-instance mencegah MongoDB Atlas kehabisan connection.
+"""
 
 from pymongo import ASCENDING, DESCENDING, MongoClient
 
 from config import Config
 
+_client: MongoClient | None = None
 
-@lru_cache(maxsize=1)
-def get_client():
-    """Return the process-wide MongoDB client."""
-    return MongoClient(Config.MONGO_URI, serverSelectionTimeoutMS=2000)
+
+def get_client() -> MongoClient:
+    """Return module-level MongoDB client, buat baru jika belum ada."""
+    global _client
+    if _client is None:
+        _client = MongoClient(
+            Config.MONGO_URI,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=10000,
+            socketTimeoutMS=10000,
+            maxPoolSize=10,        # kecil agar aman di serverless multi-instance
+            minPoolSize=0,         # boleh tutup semua connection saat idle
+            maxIdleTimeMS=45000,   # tutup connection idle > 45 detik
+        )
+    return _client
 
 
 def get_db():

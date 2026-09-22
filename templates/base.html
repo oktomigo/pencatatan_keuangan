@@ -2,11 +2,12 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <meta name="theme-color" content="#0D9488" />
-  <title>{% block title %}CatatUang{% endblock %}</title>
+  <meta name="description" content="CatatUang — Aplikasi pencatatan keuangan harian, anggaran, tabungan, dan laporan finansial yang mudah, cepat, dan aman." />
+  <title>{% block title %}CatatUang — Keuangan Teratur, Masa Depan Makmur{% endblock %}</title>
 
-  <!-- PWA Manifest -->
+  <!-- PWA Manifest & Icons -->
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.svg') }}" />
 
@@ -19,36 +20,92 @@
 
   {% block head %}{% endblock %}
 </head>
-<body>
+<body class="bg-stone-50 text-stone-900 antialiased selection:bg-teal-100 selection:text-teal-900">
 
   <!-- ============================================================
        OFFLINE BANNER
-       Tersembunyi secara default, ditampilkan oleh router.js
-       saat navigator.onLine = false
   ============================================================ -->
   <div id="offline-banner"
        class="hidden"
        role="status"
-       aria-live="polite"
-       style="
-         position: fixed;
-         top: 0; left: 0; right: 0;
-         z-index: 9999;
-         padding: var(--space-3) var(--space-4);
-         background: var(--color-info-50);
-         color: var(--color-info-700);
-         font-size: var(--text-body-md);
-         text-align: center;
-         border-bottom: 1px solid var(--color-info-500);
-       ">
-    <span>📡 Mode Offline — Data tersimpan lokal</span>
+       aria-live="polite">
+    <div class="flex items-center justify-center gap-2">
+      <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+      <span>Mode Offline — Data tersimpan secara lokal di perangkat</span>
+    </div>
   </div>
 
   <!-- ============================================================
        TOAST CONTAINER
-       Kosong — diisi oleh toast.js via showToast()
   ============================================================ -->
   <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ============================================================
+       SIDEBAR NAVIGATION — Desktop (>=1024px)
+  ============================================================ -->
+  <aside id="sidebar-nav" aria-label="Navigasi Desktop">
+    <div class="sidebar-logo">
+      <div class="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center text-white shadow-md shadow-teal-600/30">
+        <i data-lucide="wallet-cards" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <span class="sidebar-app-name block leading-tight">CatatUang</span>
+        <span class="text-[11px] text-stone-400 font-medium">Fintech Personal</span>
+      </div>
+    </div>
+
+    <nav class="flex-1 py-4 px-3 space-y-1" aria-label="Menu Utama">
+      <div class="px-3 pb-2 text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Ringkasan</div>
+      <a href="/dashboard" data-nav-path="/dashboard" class="nav-item">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Beranda</span>
+      </a>
+      <a href="/transactions" data-nav-path="/transactions" class="nav-item">
+        <i data-lucide="receipt"></i>
+        <span>Transaksi</span>
+      </a>
+      <a href="/reports" data-nav-path="/reports" class="nav-item">
+        <i data-lucide="pie-chart"></i>
+        <span>Laporan</span>
+      </a>
+
+      <div class="pt-5 px-3 pb-2 text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Perencanaan</div>
+      <a href="/budgets" data-nav-path="/budgets" class="nav-item">
+        <i data-lucide="target"></i>
+        <span>Anggaran</span>
+      </a>
+      <a href="/savings" data-nav-path="/savings" class="nav-item">
+        <i data-lucide="piggy-bank"></i>
+        <span>Tabungan</span>
+      </a>
+      <a href="/recurring-bills" data-nav-path="/recurring-bills" class="nav-item">
+        <i data-lucide="calendar-clock"></i>
+        <span>Tagihan Rutin</span>
+      </a>
+
+      <div class="pt-5 px-3 pb-2 text-[11px] font-semibold text-stone-400 uppercase tracking-wider">Preferensi</div>
+      <a href="/categories" data-nav-path="/categories" class="nav-item">
+        <i data-lucide="tags"></i>
+        <span>Kategori</span>
+      </a>
+      <a href="/export" data-nav-path="/export" class="nav-item">
+        <i data-lucide="file-spreadsheet"></i>
+        <span>Ekspor Data</span>
+      </a>
+      <a href="/settings" data-nav-path="/settings" class="nav-item">
+        <i data-lucide="sliders-horizontal"></i>
+        <span>Pengaturan</span>
+      </a>
+    </nav>
+
+    <div class="p-4 border-t border-stone-200/70 text-xs text-stone-500 flex items-center justify-between">
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        Data Lokal Aman
+      </span>
+      <span class="font-mono text-[10px] text-stone-400">v1.2</span>
+    </div>
+  </aside>
 
   <!-- ============================================================
        KONTEN HALAMAN UTAMA
@@ -61,60 +118,77 @@
        BOTTOM NAVIGATION — Mobile (<1024px)
   ============================================================ -->
   <div id="bottom-nav">
-    <nav aria-label="Navigasi utama">
+    <nav aria-label="Navigasi Bawah">
       <a href="/dashboard" data-nav-path="/dashboard" class="nav-item">
-        <i data-lucide="home"></i>
+        <i data-lucide="layout-dashboard"></i>
         <span>Beranda</span>
       </a>
       <a href="/transactions" data-nav-path="/transactions" class="nav-item">
-        <i data-lucide="list"></i>
+        <i data-lucide="receipt"></i>
         <span>Transaksi</span>
       </a>
       <a href="/reports" data-nav-path="/reports" class="nav-item">
-        <i data-lucide="bar-chart-2"></i>
+        <i data-lucide="pie-chart"></i>
         <span>Laporan</span>
       </a>
       <a href="/savings" data-nav-path="/savings" class="nav-item">
         <i data-lucide="piggy-bank"></i>
         <span>Tabungan</span>
       </a>
-      <a href="/settings" data-nav-path="/settings" class="nav-item">
-        <i data-lucide="menu"></i>
+      <button id="btn-more-nav"
+              type="button"
+              class="nav-item"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-controls="more-drawer">
+        <i data-lucide="more-horizontal"></i>
         <span>Lainnya</span>
-      </a>
+      </button>
     </nav>
   </div>
 
   <!-- ============================================================
-       SIDEBAR NAVIGATION — Desktop (>=1024px)
+       MORE MENU DRAWER — Muncul saat klik "Lainnya" di bottom nav
   ============================================================ -->
-  <div id="sidebar-nav">
-    <div class="sidebar-logo">
-      <span>💰</span>
-      <span class="sidebar-app-name">CatatUang</span>
+  <div id="more-drawer-overlay" aria-hidden="true"></div>
+  <div id="more-drawer" role="dialog" aria-modal="true" aria-label="Menu Lainnya">
+    <div class="more-drawer-handle" aria-hidden="true"></div>
+    <div class="more-drawer-header">
+      <span class="more-drawer-title">Menu Lainnya</span>
+      <button id="more-drawer-close" class="more-drawer-close" aria-label="Tutup menu">✕</button>
     </div>
-    <nav aria-label="Navigasi utama">
-      <a href="/dashboard" data-nav-path="/dashboard" class="nav-item">
-        <i data-lucide="home"></i>
-        <span>Beranda</span>
+    <div class="more-drawer-grid">
+      <a href="/budgets" data-nav-path="/budgets" class="more-drawer-item">
+        <div class="more-drawer-icon">
+          <i data-lucide="target"></i>
+        </div>
+        <span>Anggaran</span>
       </a>
-      <a href="/transactions" data-nav-path="/transactions" class="nav-item">
-        <i data-lucide="list"></i>
-        <span>Transaksi</span>
+      <a href="/recurring-bills" data-nav-path="/recurring-bills" class="more-drawer-item">
+        <div class="more-drawer-icon">
+          <i data-lucide="calendar-clock"></i>
+        </div>
+        <span>Tagihan Rutin</span>
       </a>
-      <a href="/reports" data-nav-path="/reports" class="nav-item">
-        <i data-lucide="bar-chart-2"></i>
-        <span>Laporan</span>
+      <a href="/categories" data-nav-path="/categories" class="more-drawer-item">
+        <div class="more-drawer-icon">
+          <i data-lucide="tags"></i>
+        </div>
+        <span>Kategori</span>
       </a>
-      <a href="/savings" data-nav-path="/savings" class="nav-item">
-        <i data-lucide="piggy-bank"></i>
-        <span>Tabungan</span>
+      <a href="/export" data-nav-path="/export" class="more-drawer-item">
+        <div class="more-drawer-icon">
+          <i data-lucide="file-spreadsheet"></i>
+        </div>
+        <span>Ekspor Data</span>
       </a>
-      <a href="/settings" data-nav-path="/settings" class="nav-item">
-        <i data-lucide="menu"></i>
-        <span>Lainnya</span>
+      <a href="/settings" data-nav-path="/settings" class="more-drawer-item">
+        <div class="more-drawer-icon">
+          <i data-lucide="sliders-horizontal"></i>
+        </div>
+        <span>Pengaturan</span>
       </a>
-    </nav>
+    </div>
   </div>
 
   <!-- ============================================================

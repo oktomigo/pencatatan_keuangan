@@ -60,11 +60,42 @@ function bindPageEvents() {
     loadTransactions(true);
   });
 
-  ['period-month', 'period-year'].forEach(id => {
-    pageRoot.querySelector(`#${id}`)?.addEventListener('change', () => {
-      filters.month = pageRoot.querySelector('#period-month').value;
-      filters.year = pageRoot.querySelector('#period-year').value;
-      loadTransactions(true);
+  // Tombol "Terapkan" untuk filter periode bulan/tahun
+  const applyBtn  = pageRoot.querySelector('#btn-apply-period');
+  const resetBtn  = pageRoot.querySelector('#btn-reset-period');
+  const monthInput = pageRoot.querySelector('#period-month');
+  const yearInput  = pageRoot.querySelector('#period-year');
+
+  function applyPeriodFilter() {
+    const month = monthInput?.value.trim();
+    const year  = yearInput?.value.trim();
+    filters.month = month;
+    filters.year  = year;
+    // Tampilkan reset button jika ada filter aktif
+    const hasFilter = Boolean(month || year);
+    resetBtn?.classList.toggle('hidden', !hasFilter);
+    loadTransactions(true);
+  }
+
+  function resetPeriodFilter() {
+    if (monthInput) monthInput.value = '';
+    if (yearInput)  yearInput.value  = '';
+    filters.month = '';
+    filters.year  = '';
+    resetBtn?.classList.add('hidden');
+    loadTransactions(true);
+  }
+
+  applyBtn?.addEventListener('click', applyPeriodFilter);
+  resetBtn?.addEventListener('click', resetPeriodFilter);
+
+  // Enter di input bulan/tahun juga trigger apply
+  [monthInput, yearInput].forEach(input => {
+    input?.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        applyPeriodFilter();
+      }
     });
   });
 
@@ -148,49 +179,69 @@ function renderTransactions() {
 
   [...groups.entries()].forEach(([date, groupTransactions]) => {
     const group = document.createElement('section');
-    group.className = 'date-group';
+    group.className = 'date-group card-fintech p-0 overflow-hidden border border-stone-200/70 shadow-sm';
     group.dataset.date = date;
-    group.style.cssText = 'margin-bottom:var(--space-5);';
-    const heading = document.createElement('h2');
-    heading.textContent = formatDate(date, 'group');
-    heading.style.cssText = 'margin-bottom:var(--space-2);font-size:var(--text-body-md);font-weight:600;color:var(--color-text-secondary);';
+
+    const heading = document.createElement('div');
+    heading.className = 'date-header flex items-center justify-between px-4 py-2.5 bg-stone-50/90 border-b border-stone-200/60 text-xs font-bold text-stone-700';
+    heading.innerHTML = `
+      <div class="flex items-center gap-2">
+        <i data-lucide="calendar" class="w-3.5 h-3.5 text-teal-600"></i>
+        <span>${escapeHtml(formatDate(date, 'group'))}</span>
+      </div>
+      <span class="text-[11px] font-semibold text-stone-500 bg-white px-2 py-0.5 rounded-full border border-stone-200">
+        ${groupTransactions.length} transaksi
+      </span>
+    `;
     group.appendChild(heading);
-    groupTransactions.forEach(transaction => group.appendChild(createTransactionItem(transaction)));
+
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'divide-y divide-stone-100';
+    groupTransactions.forEach(transaction => itemsContainer.appendChild(createTransactionItem(transaction)));
+    group.appendChild(itemsContainer);
+
     transactionList.appendChild(group);
   });
+  renderIcons(transactionList);
 }
 
 function createTransactionItem(transaction) {
   const item = document.createElement('article');
-  item.className = 'transaction-item';
+  item.className = 'transaction-item flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-stone-50/90 transition-colors cursor-pointer group';
   item.dataset.txId = transaction.id;
   item.dataset.type = transaction.type;
   item.dataset.category = transaction.category_name || '';
   item.dataset.note = transaction.note || '';
-  item.style.cssText = 'display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--color-border-light);cursor:pointer;';
   item.tabIndex = 0;
   item.setAttribute('role', 'button');
   item.setAttribute('aria-label', `${transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'} ${transaction.category_name || 'Lainnya'} ${formatRupiah(transaction.amount)}`);
 
-  const icon = document.createElement('span');
-  icon.className = 'tx-icon';
-  icon.style.cssText = `display:grid;place-items:center;width:40px;height:40px;flex-shrink:0;border-radius:var(--rounded-full);background:${transaction.category_color || 'var(--color-surface-raised)'};`;
-  icon.innerHTML = `<i data-lucide="${escapeHtml(transaction.category_icon || 'tag')}" width="20" height="20"></i>`;
-  const body = document.createElement('div');
-  body.style.cssText = 'min-width:0;flex:1;';
-  const category = document.createElement('strong');
-  category.className = 'tx-category';
-  category.textContent = transaction.category_name || 'Lainnya';
-  const meta = document.createElement('p');
-  meta.className = 'tx-meta';
-  meta.textContent = transaction.note ? `${transaction.note} · ${formatDate(transaction.date, 'short')}` : formatDate(transaction.date, 'short');
-  meta.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-secondary);font-size:var(--text-caption);';
-  body.append(category, meta);
-  const amount = document.createElement('strong');
-  amount.className = 'tx-amount tabular-nums';
-  amount.textContent = `${transaction.type === 'income' ? '+' : '−'}${formatRupiah(transaction.amount)}`;
-  amount.style.color = transaction.type === 'income' ? 'var(--color-text-income)' : 'var(--color-text-expense)';
-  item.append(icon, body, amount);
+  const catColor = transaction.category_color || '#0D9488';
+  const isIncome = transaction.type === 'income';
+
+  item.innerHTML = `
+    <div class="flex items-center gap-3.5 min-w-0 flex-1">
+      <span class="tx-icon w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style="background: ${catColor}18; color: ${catColor}">
+        <i data-lucide="${escapeHtml(transaction.category_icon || 'tag')}" class="w-5 h-5"></i>
+      </span>
+      <div class="min-w-0 flex-1">
+        <strong class="tx-category text-sm font-bold text-stone-900 block truncate">
+          ${escapeHtml(transaction.category_name || 'Lainnya')}
+        </strong>
+        <p class="tx-meta text-xs text-stone-500 truncate mt-0.5">
+          ${escapeHtml(transaction.note ? transaction.note : formatDate(transaction.date, 'short'))}
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2.5 flex-shrink-0">
+      <strong class="tx-amount tabular-nums text-sm sm:text-base font-extrabold ${isIncome ? 'text-emerald-700 bg-emerald-50 border border-emerald-200/80' : 'text-rose-700 bg-rose-50 border border-rose-200/80'} px-2.5 py-1 rounded-lg">
+        ${isIncome ? '+' : '−'}${formatRupiah(transaction.amount)}
+      </strong>
+      <i data-lucide="chevron-right" class="w-4 h-4 text-stone-300 group-hover:text-stone-500 group-hover:translate-x-0.5 transition-all"></i>
+    </div>
+  `;
+
   renderIcons(item);
   item.addEventListener('click', () => openDetailSheet(transaction));
   item.addEventListener('keydown', event => {

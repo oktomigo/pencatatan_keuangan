@@ -2,7 +2,52 @@
 {% block title %}Tagihan Berulang — CatatUang{% endblock %}
 
 {% block content %}
-<section id="bills-page" aria-labelledby="bills-title" style="max-width:820px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)"><header style="display:flex;justify-content:space-between;align-items:end;gap:var(--space-3);margin-bottom:var(--space-5)"><div><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Pengingat rutin</p><h1 id="bills-title" style="font-size:var(--text-heading-1);font-weight:700">Tagihan Berulang</h1></div><button id="btn-add-bill" type="button">+ Tambah</button></header><div id="bills-error" class="hidden" role="alert"></div><div id="bills-empty" class="hidden" role="status">Belum ada tagihan berulang.</div><div id="bills-list" aria-live="polite"></div></section>
+<section id="bills-page" aria-labelledby="bills-title" class="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-6">
+
+  <!-- Header -->
+  <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-stone-200/60">
+    <div>
+      <p class="text-xs sm:text-sm font-medium text-stone-500 mb-0.5">Pengingat Rutin & Beban Tetap</p>
+      <h1 id="bills-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+        Tagihan Berulang
+      </h1>
+    </div>
+    <div>
+      <button id="btn-add-bill"
+              type="button"
+              class="btn btn-primary text-sm shadow-md">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <span>Tambah Tagihan</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Info Tips Card -->
+  <div class="card-fintech p-3.5 bg-blue-50/60 border-blue-200/70 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0">
+      <i data-lucide="bell-ring" class="w-4 h-4"></i>
+    </div>
+    <p class="text-xs sm:text-sm text-blue-900 leading-relaxed">
+      Catat tagihan rutin seperti wifi, listrik, atau kos. Saat ditandai <strong>"Lunas"</strong>, pengeluaran otomatis tercatat di mutasi keuangan Anda.
+    </p>
+  </div>
+
+  <!-- Error Alert -->
+  <div id="bills-error" class="hidden" role="alert" style="padding:var(--space-4);border-radius:var(--rounded-lg);background:var(--color-danger-50);border:1px solid var(--color-danger-300);color:var(--color-danger-700)"></div>
+
+  <!-- Empty State -->
+  <div id="bills-empty" class="empty-box hidden" role="status">
+    <div class="empty-icon-wrapper">
+      <i data-lucide="calendar-check-2" class="w-6 h-6"></i>
+    </div>
+    <h3 class="empty-title">Belum Ada Tagihan Berulang</h3>
+    <p class="empty-desc">Tambahkan tagihan bulanan agar Anda selalu ingat tanggal jatuh tempo dan tidak terkena denda.</p>
+  </div>
+
+  <!-- Bills List -->
+  <div id="bills-list" aria-live="polite" class="space-y-3"></div>
+
+</section>
 {% endblock %}
 
 {% block scripts %}

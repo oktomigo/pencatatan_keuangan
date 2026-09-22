@@ -2,11 +2,122 @@
 {% block title %}Transaksi — CatatUang{% endblock %}
 
 {% block content %}
-<section id="transactions-page" aria-labelledby="transactions-title" style="max-width:820px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)">
-  <header style="margin-bottom:var(--space-5)"><p style="color:var(--color-text-secondary);font-size:var(--text-body-md);margin-bottom:var(--space-1)">Catatan harian</p><h1 id="transactions-title" style="font-size:var(--text-heading-1);font-weight:700">Transaksi</h1></header>
-  <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-3)"><input id="search-input" type="search" placeholder="Cari catatan atau kategori" aria-label="Cari transaksi" style="flex:1;min-width:220px;min-height:44px;padding:0 var(--space-3);border:1px solid var(--color-border-light);border-radius:var(--rounded-md);background:var(--color-surface-card)"><select id="category-filter" aria-label="Filter kategori" style="min-height:44px;padding:0 var(--space-3);border:1px solid var(--color-border-light);border-radius:var(--rounded-md);background:var(--color-surface-card)"><option value="">Semua kategori</option></select></div>
-  <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3);flex-wrap:wrap"><button id="filter-all" type="button" data-filter="all" class="active" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Semua</button><button id="filter-income" type="button" data-filter="income" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Pemasukan</button><button id="filter-expense" type="button" data-filter="expense" style="min-height:44px;padding:0 var(--space-3);border-radius:var(--rounded-md)">Pengeluaran</button><input id="period-month" type="number" min="1" max="12" placeholder="Bulan" aria-label="Bulan" style="width:92px;min-height:44px;padding:0 var(--space-2);border:1px solid var(--color-border-light);border-radius:var(--rounded-md)"><input id="period-year" type="number" min="2000" max="9999" placeholder="Tahun" aria-label="Tahun" style="width:110px;min-height:44px;padding:0 var(--space-2);border:1px solid var(--color-border-light);border-radius:var(--rounded-md)"></div>
-  <div id="transactions-error" class="hidden" role="alert"></div><div id="transactions-empty" class="hidden" role="status">Belum ada transaksi pada periode ini.</div><div id="transaction-list" aria-live="polite"></div><button id="transactions-load-more" type="button" class="hidden">Muat lebih banyak</button>
+<section id="transactions-page" aria-labelledby="transactions-title" class="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-5">
+
+  <!-- Header -->
+  <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-stone-200/60">
+    <div>
+      <p class="text-xs sm:text-sm font-medium text-stone-500 mb-0.5">Catatan Harian & Riwayat</p>
+      <h1 id="transactions-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+        Daftar Transaksi
+      </h1>
+    </div>
+    <div>
+      <a href="/transactions?new=1" class="btn btn-primary text-sm shadow-md">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <span>Catat Baru</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Filter & Search Card -->
+  <div class="card-fintech p-4 space-y-3">
+    <!-- Search and Category Row -->
+    <div class="flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <input id="search-input"
+               type="search"
+               placeholder="Cari transaksi atau catatan..."
+               aria-label="Cari transaksi"
+               class="form-input w-full pl-10 pr-4">
+      </div>
+      <div class="sm:w-56">
+        <select id="category-filter"
+                aria-label="Filter kategori"
+                class="form-select w-full font-medium">
+          <option value="">Semua Kategori</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Segmented Type and Period Row -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-stone-100">
+      <div class="segmented-nav w-full sm:w-auto" role="group" aria-label="Filter jenis transaksi">
+        <button id="filter-all" type="button" data-filter="all" class="segmented-btn active">Semua</button>
+        <button id="filter-income" type="button" data-filter="income" class="segmented-btn">Pemasukan</button>
+        <button id="filter-expense" type="button" data-filter="expense" class="segmented-btn">Pengeluaran</button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+        <div class="flex items-center gap-1.5">
+          <label for="period-month" class="text-xs font-semibold text-stone-500 whitespace-nowrap">Bulan:</label>
+          <input id="period-month"
+                 type="number"
+                 min="1"
+                 max="12"
+                 placeholder="MM"
+                 aria-label="Filter Bulan (1-12)"
+                 class="form-input w-16 text-center tabular-nums px-2">
+        </div>
+        <div class="flex items-center gap-1.5">
+          <label for="period-year" class="text-xs font-semibold text-stone-500 whitespace-nowrap">Tahun:</label>
+          <input id="period-year"
+                 type="number"
+                 min="2000"
+                 max="9999"
+                 placeholder="YYYY"
+                 aria-label="Filter Tahun (YYYY)"
+                 class="form-input w-24 text-center tabular-nums px-2">
+        </div>
+        <button id="btn-apply-period"
+                type="button"
+                class="btn btn-secondary text-xs px-3"
+                style="min-height:44px;"
+                aria-label="Terapkan filter periode">
+          <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+          <span>Terapkan</span>
+        </button>
+        <button id="btn-reset-period"
+                type="button"
+                class="btn btn-ghost text-xs px-2 hidden"
+                style="min-height:44px;"
+                aria-label="Reset filter periode">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div id="transactions-error" class="hidden" role="alert" style="padding:var(--space-4);border-radius:var(--rounded-lg);background:var(--color-danger-50);border:1px solid var(--color-danger-300);color:var(--color-danger-700)"></div>
+
+  <!-- Empty State -->
+  <div id="transactions-empty" class="empty-box hidden" role="status">
+    <div class="empty-icon-wrapper">
+      <i data-lucide="receipt-text" class="w-6 h-6"></i>
+    </div>
+    <h3 class="empty-title">Belum Ada Transaksi</h3>
+    <p class="empty-desc">Tidak ditemukan catatan transaksi pada filter atau periode ini.</p>
+    <a href="/transactions?new=1" class="btn btn-primary text-sm">
+      <i data-lucide="plus" class="w-4 h-4"></i>
+      Catat Transaksi Pertama
+    </a>
+  </div>
+
+  <!-- Transaction List Container -->
+  <div id="transaction-list" aria-live="polite" class="space-y-4"></div>
+
+  <!-- Load More Button -->
+  <div class="text-center pt-2">
+    <button id="transactions-load-more"
+            type="button"
+            class="btn btn-secondary w-full sm:w-auto px-8 hidden">
+      <i data-lucide="chevrons-down" class="w-4 h-4"></i>
+      Muat Lebih Banyak
+    </button>
+  </div>
+
 </section>
 {% endblock %}
 

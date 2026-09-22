@@ -123,17 +123,36 @@
      SHADOW
   ============================================================ */
   --shadow-sm:    0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md:    0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
-  --shadow-lg:    0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
-  --shadow-xl:    0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  --shadow-md:    0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --shadow-lg:    0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+  --shadow-xl:    0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05);
+  --shadow-card:  0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  --shadow-card-hover: 0 12px 30px -4px rgba(15, 23, 42, 0.12), 0 6px 12px -2px rgba(15, 23, 42, 0.06);
+  --shadow-glow-teal: 0 8px 25px -4px rgba(13, 148, 136, 0.4);
+  --shadow-glow-danger: 0 8px 25px -4px rgba(239, 68, 68, 0.35);
   --shadow-inner: inset 0 2px 4px rgba(0,0,0,0.05);
-  --shadow-nav:   0 -1px 0 rgba(0,0,0,0.06), 0 -4px 12px rgba(0,0,0,0.08);
+  --shadow-nav:   0 -1px 0 rgba(0,0,0,0.05), 0 -8px 20px rgba(0,0,0,0.06);
+
+  /* ============================================================
+     GLASSMORPHISM & GRADIENTS
+  ============================================================ */
+  --glass-bg:           rgba(255, 255, 255, 0.82);
+  --glass-border:       rgba(255, 255, 255, 0.6);
+  --glass-blur:         blur(16px);
+  --glass-card-border:  rgba(15, 23, 42, 0.08);
+
+  --gradient-brand:       linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+  --gradient-emerald:     linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-card-hero:   linear-gradient(135deg, #0F766E 0%, #115E59 60%, #134E4A 100%);
+  --gradient-card-danger: linear-gradient(135deg, #991B1B 0%, #B91C1C 60%, #DC2626 100%);
+  --gradient-danger:      linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  --gradient-surface:     linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
 
   /* ============================================================
      TRANSITION
   ============================================================ */
-  --transition-fast:   100ms ease;                            /* Button tap feedback */
-  --transition-normal: 200ms ease;                            /* Hover state, color change */
-  --transition-slow:   300ms ease-in-out;                     /* Modal open/close */
-  --transition-spring: 300ms cubic-bezier(0.34,1.56,0.64,1); /* FAB, bottom sheet spring */
+  --transition-fast:   120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:   300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }

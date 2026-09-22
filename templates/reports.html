@@ -1,13 +1,152 @@
 {% extends "base.html" %}
-{% block title %}Laporan — CatatUang{% endblock %}
+{% block title %}Laporan Keuangan — CatatUang{% endblock %}
 
 {% block head %}
-<!-- Chart.js CDN — dibutuhkan oleh reports.js -->
+<!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
-<section id="reports-page" aria-labelledby="reports-title" style="max-width:1100px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-20)"><header style="margin-bottom:var(--space-5)"><p style="color:var(--color-text-secondary);font-size:var(--text-body-md)">Pahami pola keuangan</p><h1 id="reports-title" style="font-size:var(--text-heading-1);font-weight:700">Laporan</h1></header><div id="report-period-tabs" role="tablist"><button id="tab-this-month" data-period="month" type="button">Bulan ini</button><button id="tab-last-month" data-period="last-month" type="button">Bulan lalu</button><button id="tab-custom" data-period="custom" type="button">Kustom</button></div><div id="custom-range" class="hidden"><input id="range-start" type="date" aria-label="Tanggal mulai"><input id="range-end" type="date" aria-label="Tanggal akhir"><span id="range-error" class="hidden" role="alert">Tanggal mulai tidak boleh setelah tanggal akhir</span></div><div id="reports-error" class="hidden" role="alert"></div><div id="empty-state" class="hidden" role="status">Belum ada transaksi pada periode ini</div><section id="report-content"><div id="report-summary"><strong id="summary-income">Rp 0</strong><strong id="summary-expense">Rp 0</strong><strong id="summary-balance">Rp 0</strong></div><div><figure><figcaption>Proporsi pengeluaran</figcaption><div id="chart-error" class="hidden" role="status">Grafik tidak dapat ditampilkan</div><canvas id="donut-chart" aria-label="Grafik pengeluaran per kategori"></canvas><div id="donut-legend"></div></figure><figure><figcaption>Tren harian</figcaption><canvas id="bar-chart" aria-label="Grafik tren pemasukan dan pengeluaran"></canvas></figure></div><div id="category-breakdown"></div></section></section>
+<section id="reports-page" aria-labelledby="reports-title" class="max-w-5xl mx-auto px-4 py-6 md:py-8 space-y-6">
+
+  <!-- Header -->
+  <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-2 border-b border-stone-200/60">
+    <div>
+      <p class="text-xs sm:text-sm font-medium text-stone-500 mb-0.5">Analisis & Pola Keuangan</p>
+      <h1 id="reports-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+        Laporan Keuangan
+      </h1>
+    </div>
+    <div class="inline-flex items-center gap-1.5 self-start sm:self-auto bg-white px-3 py-1.5 rounded-lg border border-stone-200 shadow-sm text-xs font-semibold text-stone-700">
+      <i data-lucide="line-chart" class="w-4 h-4 text-teal-600"></i>
+      Visualisasi Realtime
+    </div>
+  </header>
+
+  <!-- Period Tabs Card -->
+  <div class="card-fintech p-4 space-y-3">
+    <div id="report-period-tabs" role="tablist" class="segmented-nav" aria-label="Pilih periode laporan">
+      <button id="tab-this-month" data-period="month" type="button" class="segmented-btn active" role="tab">Bulan Ini</button>
+      <button id="tab-last-month" data-period="last-month" type="button" class="segmented-btn" role="tab">Bulan Lalu</button>
+      <button id="tab-custom" data-period="custom" type="button" class="segmented-btn" role="tab">Rentang Kustom</button>
+    </div>
+
+    <!-- Custom Date Range Picker -->
+    <div id="custom-range" class="hidden pt-3 border-t border-stone-100 flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-2">
+        <label for="range-start" class="text-xs font-semibold text-stone-600">Mulai:</label>
+        <input id="range-start" type="date" aria-label="Tanggal mulai" class="form-input text-sm">
+      </div>
+      <div class="flex items-center gap-2">
+        <label for="range-end" class="text-xs font-semibold text-stone-600">Sampai:</label>
+        <input id="range-end" type="date" aria-label="Tanggal akhir" class="form-input text-sm">
+      </div>
+      <span id="range-error" class="hidden text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1.5 rounded-md" role="alert">
+        Tanggal mulai tidak boleh setelah tanggal akhir
+      </span>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div id="reports-error" class="hidden" role="alert" style="padding:var(--space-4);border-radius:var(--rounded-lg);background:var(--color-danger-50);border:1px solid var(--color-danger-300);color:var(--color-danger-700)"></div>
+
+  <!-- Empty State -->
+  <div id="empty-state" class="empty-box hidden" role="status">
+    <div class="empty-icon-wrapper">
+      <i data-lucide="pie-chart" class="w-6 h-6"></i>
+    </div>
+    <h3 class="empty-title">Tidak Ada Transaksi</h3>
+    <p class="empty-desc">Belum ada data transaksi yang tercatat pada rentang waktu ini.</p>
+    <a href="/transactions?new=1" class="btn btn-primary text-sm">
+      <i data-lucide="plus" class="w-4 h-4"></i>
+      Mulai Catat Transaksi
+    </a>
+  </div>
+
+  <!-- Report Content -->
+  <section id="report-content" class="space-y-6">
+
+    <!-- Summary Metrics 3 Cards -->
+    <div id="report-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="card-fintech p-4 flex items-center gap-3.5 border-l-4 border-l-emerald-500">
+        <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="arrow-down-left" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-stone-500">Total Pemasukan</p>
+          <strong id="summary-income" class="tabular-nums text-lg sm:text-xl font-extrabold text-emerald-600 block">Rp 0</strong>
+        </div>
+      </div>
+
+      <div class="card-fintech p-4 flex items-center gap-3.5 border-l-4 border-l-rose-500">
+        <div class="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="arrow-up-right" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-stone-500">Total Pengeluaran</p>
+          <strong id="summary-expense" class="tabular-nums text-lg sm:text-xl font-extrabold text-rose-600 block">Rp 0</strong>
+        </div>
+      </div>
+
+      <div class="card-fintech p-4 flex items-center gap-3.5 border-l-4 border-l-teal-500">
+        <div class="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
+          <i data-lucide="scale" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-stone-500">Saldo Bersih</p>
+          <strong id="summary-balance" class="tabular-nums text-lg sm:text-xl font-extrabold text-stone-900 block">Rp 0</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid (2 columns on lg) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Donut Chart Card -->
+      <figure class="card-fintech p-5 space-y-4 m-0">
+        <div class="flex items-center justify-between pb-2 border-b border-stone-100">
+          <figcaption class="font-bold text-stone-900 flex items-center gap-2">
+            <i data-lucide="pie-chart" class="w-4 h-4 text-teal-600"></i>
+            Proporsi Pengeluaran
+          </figcaption>
+          <span class="text-xs text-stone-400 font-medium">Per Kategori</span>
+        </div>
+        <div id="chart-error" class="hidden text-xs text-stone-500 text-center py-8" role="status">
+          Grafik tidak dapat ditampilkan
+        </div>
+        <div class="relative max-w-[280px] mx-auto py-2">
+          <canvas id="donut-chart" aria-label="Grafik pengeluaran per kategori"></canvas>
+        </div>
+        <div id="donut-legend" class="pt-2 border-t border-stone-100"></div>
+      </figure>
+
+      <!-- Bar Chart Card -->
+      <figure class="card-fintech p-5 space-y-4 m-0">
+        <div class="flex items-center justify-between pb-2 border-b border-stone-100">
+          <figcaption class="font-bold text-stone-900 flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-4 h-4 text-teal-600"></i>
+            Tren Harian
+          </figcaption>
+          <span class="text-xs text-stone-400 font-medium">Arus Kas</span>
+        </div>
+        <div class="w-full pt-2">
+          <canvas id="bar-chart" aria-label="Grafik tren pemasukan dan pengeluaran"></canvas>
+        </div>
+      </figure>
+    </div>
+
+    <!-- Category Breakdown Card -->
+    <div class="card-fintech p-5 space-y-3">
+      <div class="flex items-center justify-between pb-2 border-b border-stone-100">
+        <h3 class="font-bold text-stone-900 flex items-center gap-2">
+          <i data-lucide="list-tree" class="w-4 h-4 text-teal-600"></i>
+          Rincian Pengeluaran per Kategori
+        </h3>
+      </div>
+      <div id="category-breakdown" class="space-y-3"></div>
+    </div>
+
+  </section>
+</section>
 {% endblock %}
 
 {% block scripts %}

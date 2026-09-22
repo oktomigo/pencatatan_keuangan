@@ -41,13 +41,36 @@ async function refreshDashboard() {
 function renderLoading() {
   const card = dashboardRoot?.querySelector('#saldo-card');
   if (card) card.classList.add('skeleton');
+
+  // Skeleton: quick action grid
+  const quickGrid = dashboardRoot?.querySelector('.grid.grid-cols-2');
+  if (quickGrid) {
+    quickGrid.dataset.originalContent = quickGrid.innerHTML;
+    quickGrid.innerHTML = Array.from({ length: 4 }, () =>
+      '<div class="skeleton" style="height:72px;border-radius:var(--rounded-xl);"></div>'
+    ).join('');
+  }
+
+  // Skeleton: budget section
+  const budgetSection = dashboardRoot?.querySelector('#budget-section');
+  if (budgetSection) {
+    budgetSection.classList.add('skeleton-parent');
+    const chips = budgetSection.querySelector('#budget-chips');
+    if (chips) {
+      chips.innerHTML = Array.from({ length: 3 }, () =>
+        '<span class="skeleton" style="display:inline-block;width:100px;height:32px;border-radius:var(--rounded-full);"></span>'
+      ).join('');
+    }
+  }
+
+  // Skeleton: recent transactions
   const recent = dashboardRoot?.querySelector('#recent-transactions');
   if (recent) {
     recent.innerHTML = '';
     for (let index = 0; index < 3; index += 1) {
       const skeleton = document.createElement('div');
       skeleton.className = 'skeleton';
-      skeleton.style.cssText = 'height:64px;margin-bottom:var(--space-2);';
+      skeleton.style.cssText = 'height:64px;margin-bottom:var(--space-2);border-radius:var(--rounded-lg);';
       recent.appendChild(skeleton);
     }
   }
@@ -61,6 +84,18 @@ function renderDashboard(data) {
   dashboardRoot.querySelector('#dashboard-title').textContent = period.label ? `Keuangan ${period.label}` : 'Keuangan Bulan Ini';
   dashboardRoot.querySelector('#saldo-card')?.classList.remove('skeleton');
 
+  // Restore quick action grid jika sempat di-skeleton
+  const quickGrid = dashboardRoot.querySelector('.grid.grid-cols-2');
+  if (quickGrid && quickGrid.dataset.originalContent) {
+    quickGrid.innerHTML = quickGrid.dataset.originalContent;
+    delete quickGrid.dataset.originalContent;
+    // Re-render lucide icons yang baru dipasang kembali
+    if (globalThis.lucide?.createIcons) globalThis.lucide.createIcons({ nodes: quickGrid.querySelectorAll('[data-lucide]') });
+  }
+
+  // Hapus skeleton state dari budget section
+  dashboardRoot.querySelector('#budget-section')?.classList.remove('skeleton-parent');
+
   updateSaldoCard(summary);
   updateBudgetChips(data.budgets || data.budget_summary || []);
   updateBillsSection(data.upcoming_bills || []);
@@ -70,16 +105,17 @@ function renderDashboard(data) {
 function updateSaldoCard(summary) {
   const balance = Number(summary.balance || 0);
   const card = dashboardRoot.querySelector('#saldo-card');
+
+  // Hapus semua inline style agar CSS token & gradient dari card-hero tetap berlaku
+  card.style.background = '';
+  card.style.color = '';
+
   dashboardRoot.querySelector('#saldo-amount').textContent = formatRupiah(balance);
   dashboardRoot.querySelector('#income-amount').textContent = `↑ ${formatRupiah(Number(summary.total_income || 0))}`;
   dashboardRoot.querySelector('#expense-amount').textContent = `↓ ${formatRupiah(Number(summary.total_expense || 0))}`;
-  if (balance >= 0) {
-    card.style.background = 'var(--color-primary-500)';
-    card.style.color = 'var(--color-text-inverse)';
-  } else {
-    card.style.background = 'var(--color-danger-50)';
-    card.style.color = 'var(--color-danger-700)';
-  }
+
+  // Toggle state danger via class — CSS yang mengelola visual
+  card.classList.toggle('card-hero--danger', balance < 0);
 }
 
 function updateBudgetChips(budgets) {
@@ -130,12 +166,11 @@ function updateBillsSection(bills) {
     amount.textContent = formatRupiah(bill.amount);
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'btn-mark-paid';
+    button.className = 'btn btn-ghost btn-sm-pay';
     button.textContent = 'Tandai Lunas';
     button.dataset.billId = bill.id;
     button.dataset.billName = bill.name;
     button.dataset.billAmount = bill.amount;
-    button.style.cssText = 'min-height:44px;padding:0 var(--space-2);border-radius:var(--rounded-md);color:var(--color-primary-700);font-size:var(--text-body-md);font-weight:600;';
     button.addEventListener('click', event => {
       event.stopPropagation();
       markBillPaid(bill);

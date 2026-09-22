@@ -15,6 +15,7 @@ from flask import Flask, g, jsonify, render_template, redirect, url_for, request
 from flask_cors import CORS
 from bson import ObjectId
 from pymongo.errors import PyMongoError
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import Config
 from db import get_db, init_indexes
@@ -23,6 +24,7 @@ from utils_api import fail, ok
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 CORS(app, origins=Config.CORS_ORIGINS)
 register_device_middleware(app)
 
@@ -34,6 +36,15 @@ try:
     init_indexes()
 except PyMongoError:
     logger.warning('MongoDB tidak tersedia; index akan dibuat saat startup berikutnya.')
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    return response
 
 
 @app.before_request
@@ -623,6 +634,163 @@ def api_export():
     except Exception:
         logger.exception('Export failed')
         return fail('STORAGE_ERROR', 'Ekspor gagal, silakan coba lagi', status=500)
+
+
+@app.route('/api/backup', methods=['GET'])
+def api_backup():
+    database = get_db()
+    device_id = g.device_id
+
+    def clean_docs(cursor):
+        result = []
+        for doc in cursor:
+            d = dict(doc)
+            d['id'] = str(d.pop('_id', ''))
+            result.append(d)
+        return result
+
+    categories = clean_docs(database.categories.find({'device_id': device_id}))
+    transactions = clean_docs(database.transactions.find({'device_id': device_id}))
+    budgets = clean_docs(database.budgets.find({'device_id': device_id}))
+    recurring_bills = clean_docs(database.recurring_bills.find({'device_id': device_id}))
+    savings_goals = clean_docs(database.savings_goals.find({'device_id': device_id}))
+
+    backup_payload = {
+        'version': '1.0',
+        'device_id': device_id,
+        'exported_at': datetime.now(timezone.utc).isoformat(),
+        'counts': {
+            'categories': len(categories),
+            'transactions': len(transactions),
+            'budgets': len(budgets),
+            'recurring_bills': len(recurring_bills),
+            'savings_goals': len(savings_goals),
+        },
+        'data': {
+            'categories': categories,
+            'transactions': transactions,
+            'budgets': budgets,
+            'recurring_bills': recurring_bills,
+            'savings_goals': savings_goals,
+        },
+    }
+    return ok(backup_payload)
+
+
+@app.route('/api/restore', methods=['POST'])
+def api_restore():
+    body = request.get_json(silent=True) or {}
+    backup_data = body.get('data') or body
+    if not isinstance(backup_data, dict):
+        return fail('VALIDATION_ERROR', 'Format file cadangan tidak valid.')
+
+    data_content = backup_data.get('data', backup_data)
+    if not isinstance(data_content, dict):
+        return fail('VALIDATION_ERROR', 'Format data cadangan tidak valid.')
+
+    database = get_db()
+    device_id = g.device_id
+
+    categories = data_content.get('categories', [])
+    transactions = data_content.get('transactions', [])
+    budgets = data_content.get('budgets', [])
+    recurring_bills = data_content.get('recurring_bills', [])
+    savings_goals = data_content.get('savings_goals', [])
+
+    try:
+        cat_id_map = {}
+        for cat in categories:
+            if not isinstance(cat, dict) or not cat.get('name'):
+                continue
+            old_id = cat.get('id')
+            name_lower = cat['name'].strip().lower()
+            cat_type = cat.get('type', 'expense')
+            existing = database.categories.find_one({
+                'device_id': device_id,
+                'type': cat_type,
+                'name_lower': name_lower,
+            })
+            if existing:
+                cat_id_map[old_id] = str(existing['_id'])
+            else:
+                doc = {
+                    'device_id': device_id,
+                    'name': cat['name'].strip(),
+                    'name_lower': name_lower,
+                    'type': cat_type,
+                    'color': cat.get('color', '#0D9488'),
+                    'icon': cat.get('icon', 'tag'),
+                    'is_default': bool(cat.get('is_default', False)),
+                }
+                res = database.categories.insert_one(doc)
+                cat_id_map[old_id] = str(res.inserted_id)
+
+        for tx in transactions:
+            if not isinstance(tx, dict) or tx.get('amount') is None:
+                continue
+            new_cat_id = cat_id_map.get(tx.get('category_id'), tx.get('category_id'))
+            tx_doc = {
+                'device_id': device_id,
+                'type': tx.get('type', 'expense'),
+                'amount': tx['amount'],
+                'date': tx.get('date', datetime.now().date().isoformat()),
+                'category_id': new_cat_id,
+                'note': tx.get('note', '').strip(),
+                'created_at': tx.get('created_at', datetime.now(timezone.utc).isoformat()),
+                'updated_at': datetime.now(timezone.utc).isoformat(),
+            }
+            database.transactions.insert_one(tx_doc)
+
+        for b in budgets:
+            if not isinstance(b, dict) or not b.get('category_id'):
+                continue
+            new_cat_id = cat_id_map.get(b.get('category_id'), b.get('category_id'))
+            b_doc = {
+                'device_id': device_id,
+                'category_id': new_cat_id,
+                'amount': b.get('amount', 0),
+                'period': b.get('period', 'monthly'),
+            }
+            database.budgets.replace_one(
+                {'device_id': device_id, 'category_id': new_cat_id, 'period': b_doc['period']},
+                b_doc,
+                upsert=True,
+            )
+
+        for rb in recurring_bills:
+            if not isinstance(rb, dict) or not rb.get('name'):
+                continue
+            new_cat_id = cat_id_map.get(rb.get('category_id'), rb.get('category_id'))
+            rb_doc = {
+                'device_id': device_id,
+                'name': rb['name'],
+                'amount': rb.get('amount', 0),
+                'due_day': rb.get('due_day', 1),
+                'frequency': rb.get('frequency', 'monthly'),
+                'next_due': rb.get('next_due', datetime.now().date().isoformat()),
+                'is_active': rb.get('is_active', True),
+                'category_id': new_cat_id,
+                'last_paid_at': rb.get('last_paid_at'),
+            }
+            database.recurring_bills.insert_one(rb_doc)
+
+        for sg in savings_goals:
+            if not isinstance(sg, dict) or not sg.get('name'):
+                continue
+            sg_doc = {
+                'device_id': device_id,
+                'name': sg['name'],
+                'target_amount': sg.get('target_amount', 0),
+                'saved_amount': sg.get('saved_amount', 0),
+                'deadline': sg.get('deadline', datetime.now().date().isoformat()),
+                'status': sg.get('status', 'active'),
+            }
+            database.savings_goals.insert_one(sg_doc)
+
+        return ok({'message': 'Data cadangan berhasil dipulihkan.'})
+    except Exception as exc:
+        logger.exception('Restore failed')
+        return fail('RESTORE_FAILED', f'Gagal memulihkan data: {exc}', status=500)
 
 
 if __name__ == '__main__':
